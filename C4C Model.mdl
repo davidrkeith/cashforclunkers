@@ -1,0 +1,2984 @@
+{UTF-8}
+Annual Sales=
+	SUM(Sales p[Platform!])+SUM(C4C Replacement Sales p[Platform!])
+	~	vehicle/year
+	~		|
+
+Sales Difference=
+	Cumulative Sales-Cumulative Sales Reference
+	~	vehicle
+	~		~	:SUPPLEMENTARY 
+	|
+
+Cumulative Sales Reference= INTEG (
+	Annual Sales Reference,
+		0)
+	~	vehicles
+	~		|
+
+Annual Sales Reference=
+	SUM(Sales p 0[Platform!])
+	~	vehicle/year
+	~		|
+
+Cumulative Sales= INTEG (
+	Annual Sales,
+		0)
+	~	vehicles
+	~		|
+
+Fleet Average New Vehicles Fuel Economy Reference=
+	SUM("New Vehicle Fuel Economy CAFE + EV p"[Platform!] * Sales p 0[Platform!]) / SUM(\
+		Sales p 0[Platform!])
+	~	mile/gallon
+	~	Average fuel economy of new vehicles, reference
+	~	:SUPPLEMENTARY 
+	|
+
+Fleet Average New Vehicles Fuel Economy=
+	(SUM(Sales p[Platform!]*"New Vehicle Fuel Economy CAFE + EV p"[Platform!]) + 
+	 SUM(C4C Replacement Sales p[ICE!]*Actual C4C Fuel Economy of New Vehicles i[ICE!]) \
+		+ 
+	 SUM(C4C Replacement Sales p[EV!]*"New Vehicle Fuel Economy CAFE + EV p"[EV!])) / (SUM\
+		(Sales p[Platform!]) + SUM(C4C Replacement Sales p
+	[Platform!]))
+	~	mile/gallon
+	~	Average fuel economy of new vehicles
+	~	:SUPPLEMENTARY 
+	|
+
+New Vehicle ICE Fuel Consumption CAFE i[Car]=
+	"New Vehicle Fuel Consumption CAFE + EV p"[Car] ~~|
+New Vehicle ICE Fuel Consumption CAFE i[LightTruck]=
+	"New Vehicle Fuel Consumption CAFE + EV p"[LightTruck]
+	~	gallon/mile
+	~	New vehicle emissions according to CAFE policy for ICE vehicles
+	|
+
+"New Vehicle Fuel Consumption CAFE + EV p"[Platform]=
+	1 / "New Vehicle Fuel Economy CAFE + EV p"[Platform]
+	~	gallon/mile
+	~	New vehicle fuel economy according to CAFE policy and EV learning
+	|
+
+Relative Fuel Savings from Driving C4C vs CAFE i[ICE]=
+	1 - (Actual C4C Fuel Consumption of New Vehicles i[ICE]/"New Vehicle Fuel Consumption CAFE + EV p"\
+		[ICE])
+	~	dmnl
+	~	Annual fuel savings from driving a vehicle with C4C standards relative to \
+		CAFE standards for fuel economy
+	|
+
+Effect of C4C Stringency on C4C Hazard Rate i[ICE]=
+	(C4C Required Fuel Economy of New Vehicles i[ICE] / "New Vehicle Fuel Economy CAFE + EV p"\
+		[ICE]) ^ Sensitivity of C4C Stringency Effect
+	~	dmnl
+	~	Effect of C4C stringency standards on propensity to participate in the C4C \
+		program (more stringent standards mean it is harder to find a car)
+	|
+
+"Additional Annual Fuel Savings from trade-in to C4C vs CAFE i"[ICE]=
+	Fuel Price Adjusted VMT * Real Fuel Price * ("New Vehicle Fuel Consumption CAFE + EV p"\
+		[ICE] - Actual C4C Fuel Consumption of New Vehicles i
+	[ICE])
+	~	$/(vehicle*year)
+	~	Annual fuel savings from driving a vehicle with C4C standards vs. CAFE \
+		standards for fuel economy
+	~	:SUPPLEMENTARY 
+	|
+
+"Annual Fuel Savings from trade-in to CAFE ai"[Age,ICE]=
+	Fuel Price Adjusted VMT * Real Fuel Price * (Average Fuel Consumption ci[Emissions Cohort\
+		,ICE] - "New Vehicle Fuel Consumption CAFE + EV p"[ICE])
+	~	$/(vehicle*year)
+	~	Annual fuel savings from driving a vehicle with CAFE standards vs. old \
+		vehicle that was traded in
+	~	:SUPPLEMENTARY 
+	|
+
+"New Vehicle Fuel Economy CAFE + EV p"[Car]=
+	IF THEN ELSE
+	  (Time <= SAFE End Point Year,
+	   SAFE Rules FE[Car](Time), 
+	   SAFE Rules FE[Car](SAFE End Point Year) + (Time-SAFE End Point Year) * 
+	     (ICE CO2 conversion factor / Finish Point p[Car]-SAFE Rules FE[Car](SAFE End Point Year\
+		)) / (FINAL TIME-SAFE End Point Year
+)
+	  )
+	* (1/Adjustment to real driving) ~~|
+"New Vehicle Fuel Economy CAFE + EV p"[LightTruck]=
+	IF THEN ELSE
+	  (Time <= SAFE End Point Year,
+	   SAFE Rules FE[LightTruck](Time), 
+	   SAFE Rules FE[LightTruck](SAFE End Point Year) + (Time-SAFE End Point Year) * 
+	     (ICE CO2 conversion factor / Finish Point p[LightTruck]-SAFE Rules FE[LightTruck\
+		](SAFE End Point Year)) / 
+	     (FINAL TIME-SAFE End Point Year)
+	  )
+	* (1/Adjustment to real driving) ~~|
+"New Vehicle Fuel Economy CAFE + EV p"[EVCar]=
+	Native units to GGE Electricity / EV Energy Efficiency e[EVCar] ~~|
+"New Vehicle Fuel Economy CAFE + EV p"[EVLightTruck]=
+	Native units to GGE Electricity / EV Energy Efficiency e[EVLightTruck]
+	~	mile/gallon
+	~	New vehicle fuel consumption according to CAFE policy and EV learning
+	|
+
+SAFE Rules FE[Car](
+	[(2018,40)-(2026,50)],(2018,40.4),(2019,41.9),(2020,43.6),(2021,44.2),(2022,44.9),(2023\
+		,45.6),(2024,46.3),(2025,47),(2026,47.7)) ~~|
+SAFE Rules FE[LightTruck](
+	[(2018,20)-(2026,40)],(2018,30),(2019,30.5),(2020,31.1),(2021,31.6),(2022,32.1),(2023\
+		,32.6),(2024,33.1),(2025,33.6),(2026,34.1))
+	~	mile/gallon
+	~	https://www.govinfo.gov/content/pkg/FR-2020-04-30/pdf/2020-06967.pdf
+		page 24198
+	|
+
+Effect of C4C Stringency on Addressable Market i[ICE]=
+	(C4C Required Fuel Economy of New Vehicles i[ICE] / "New Vehicle Fuel Economy CAFE + EV p"\
+		[ICE]) ^ Sensitivity of Addressable Market to C4C Stringency
+	~	dmnl
+	~	Effect of addressable market (available makes and models) satisfying C4C \
+		standard stringency
+	|
+
+C4C Required Fuel Economy of New Vehicles i[Car]=
+	"New Vehicle Fuel Economy CAFE + EV p"[Car] * 
+	
+	IF THEN ELSE
+	  (Time < C4C Start Year :OR: Time > C4C End Year,
+	   1,
+	   C4C Stringency Multiplier Cars
+	  ) ~~|
+C4C Required Fuel Economy of New Vehicles i[LightTruck]=
+	"New Vehicle Fuel Economy CAFE + EV p"[LightTruck] * 
+	
+	IF THEN ELSE
+	  (Time < C4C Start Year :OR: Time > C4C End Year,
+	   1,
+	   C4C Stringency Multipler Light Trucks
+	  )
+	~	miles/gallon [20,200]
+	~	Required fuel economy for C4C replacement purchases
+	|
+
+Utility of EV e 0[EV]=
+	Inconvenience of EV e 0[EV]*Weight of Market Maturity + Relative Fuel Savings from Driving EV e 0\
+		[EV]*Weight of Fuel Savings
+	 + Price Surcharge of EVs relative to ICE 0
+	*Weight of Price Surcharge
+	~	dmnl
+	~	Utility of EV, reference
+	|
+
+Utility of EV e[EV]=
+	Inconvenience of EV e[EV]*Weight of Market Maturity + Relative Fuel Savings from Driving EV e\
+		[EV]*Weight of Fuel Savings + Price Surcharge of EVs relative to ICE
+	*Weight of Price Surcharge
+	~	dmnl
+	~	Utility of EV
+	|
+
+Weight of Market Maturity=
+	1
+	~	dmnl
+	~	Weight of fuel savings in the utility
+	|
+
+Start Point p[ICE]=
+	SAFE Rules CO2[ICE](INITIAL TIME)
+	~	g CO2/mile
+	~	Vehicle emissions at the start point of the piecewise function that \
+		describes effective CAFE policy
+	|
+
+Adjustment to real driving=
+	1.25
+	~	dmnl
+	~	https://fas.org/sgp/crs/misc/R45204.pdf
+		(fuel economy is 20% lower, so emissions multiplier is 1/0.8=1.25)
+	|
+
+"New Vehicle Emissions CAFE + EV p"[Car]=
+	IF THEN ELSE
+	  (Time <= SAFE End Point Year,
+	   SAFE Rules CO2[Car](Time), 
+	   SAFE Rules CO2[Car](SAFE End Point Year) + (Time-SAFE End Point Year) * 
+	     (Finish Point p[Car]-SAFE Rules CO2[Car](SAFE End Point Year)) / (FINAL TIME-SAFE End Point Year\
+		)
+	  )
+	* Adjustment to real driving ~~|
+"New Vehicle Emissions CAFE + EV p"[LightTruck]=
+	IF THEN ELSE
+	  (Time <= SAFE End Point Year,
+	   SAFE Rules CO2[LightTruck](Time), 
+	   SAFE Rules CO2[LightTruck](SAFE End Point Year) + (Time-SAFE End Point Year) * 
+	     (Finish Point p[LightTruck]-SAFE Rules CO2[LightTruck](SAFE End Point Year)) / \
+		(FINAL TIME-SAFE End Point Year)
+	  )
+	* Adjustment to real driving ~~|
+"New Vehicle Emissions CAFE + EV p"[EVCar]=
+	GHG Emissions EV Effective e[EVCar] ~~|
+"New Vehicle Emissions CAFE + EV p"[EVLightTruck]=
+	GHG Emissions EV Effective e[EVLightTruck]
+	~	grams CO2/mile
+	~	New vehicle emissions according to CAFE policy and EV learning
+	|
+
+SAFE Rules CO2[Car](
+	[(2018,100)-(2026,300)],(2018,208),(2019,197),(2020,188),(2021,183),(2022,180),(2023\
+		,177),(2024,174),(2025,171),(2026,168)) ~~|
+SAFE Rules CO2[LightTruck](
+	[(2018,200)-(2026,300)],(2018,285),(2019,278),(2020,270),(2021,264),(2022,259),(2023\
+		,255),(2024,251),(2025,247),(2026,243))
+	~	grams CO2/mile
+	~	https://www.govinfo.gov/content/pkg/FR-2020-04-30/pdf/2020-06967.pdf
+		page 24198
+	|
+
+Sensitivity of Hazard Rate to Age=
+	0.5
+	~	dmnl [0,3]
+	~	Sensitivity of the propensity to participate in the C4C program to vehicle \
+		age
+	|
+
+Sensitivity of Incentive Effect=
+	0.75
+	~	dmnl [0,2]
+	~	Sensitivity of C4C incentive
+	|
+
+Sensitivity of Fuel Savings Effect=
+	0.75
+	~	dmnl [0,2]
+	~	Sensitivity of additional fuel savings from C4C program
+	|
+
+Share of EVs in Fleet Reference=
+	SUM(Fleet ap 0[Age!,EV!]) / SUM(Fleet ap 0[Age!,Platform!])
+	~	dmnl
+	~	Share of EVs in the fleet, reference
+	~	:SUPPLEMENTARY 
+	|
+
+Share of EVs in Fleet=
+	SUM(Fleet ap[Age!,EV!]) / SUM(Fleet ap[Age!,Platform!])
+	~	dmnl
+	~	Share of EVs in the fleet
+	~	:SUPPLEMENTARY 
+	|
+
+C4C Stringency Multiplier Cars=
+	C4C Stringency Multiplier
+	~	dmnl [1,2]
+	~	C4C stringency multiplier of fuel economy vs. CAFE for cars
+	|
+
+C4C Stringency Multipler Light Trucks=
+	C4C Stringency Multiplier
+	~	dmnl [1,2]
+	~	C4C stringency multiplier of fuel economy vs. CAFE for light trucks
+	|
+
+C4C Stringency Multiplier=
+	1.6
+	~	dmnl [1,2]
+	~	C4C stringency multiplier of fuel economy vs. CAFE
+	|
+
+Electricity Cost=
+	Grid Electricity Cost + 
+	
+	Renewable Electricity Surcharge * 
+	IF THEN ELSE
+	  (SW EV Renewable Electricity = 1 :AND: Time >= Year of Fully Renewable Electricity\
+		,
+	   1,
+	   Green Electricity Share
+	  )
+	~	$/(kW*hour)
+	~	Effective cost of electricity used for recharging EVs
+	|
+
+Sales p 0[Car]=
+	(Total outflow p 0[Car]+Total outflow p 0[EVCar] + New Customer Sales i 0[Car]) * (1\
+		-Share of EV i 0[Car]) ~~|
+Sales p 0[LightTruck]=
+	(Total outflow p 0[LightTruck]+Total outflow p 0[EVLightTruck] + New Customer Sales i 0\
+		[LightTruck]) * (1-Share of EV i 0[LightTruck]) ~~|
+Sales p 0[EVCar]=
+	(Total outflow p 0[Car]+Total outflow p 0[EVCar] + New Customer Sales i 0[Car]) * Share of EV i 0\
+		[Car] ~~|
+Sales p 0[EVLightTruck]=
+	(Total outflow p 0[LightTruck]+Total outflow p 0[EVLightTruck] + New Customer Sales i 0\
+		[LightTruck]) * Share of EV i 0[LightTruck]
+	~	vehicles/year
+	~	Sales of new vehicles, reference
+	|
+
+New Customer Sales i 0[Car]=
+	Total fleet 0 * Aggregate Market Growth Rate * share of cars in the fleet 0 ~~|
+New Customer Sales i 0[LightTruck]=
+	Total fleet 0 * Aggregate Market Growth Rate * (1-share of cars in the fleet 0)
+	~	vehicle/year
+	~	Additional sales of new vehicles due to market growth, reference
+	|
+
+Sales p[Car]=
+	(Total outflow p[Car]+Total outflow p[EVCar] + New Customer Sales i[Car]) * (1-Share of EV i\
+		[Car]) ~~|
+Sales p[LightTruck]=
+	(Total outflow p[LightTruck]+Total outflow p[EVLightTruck] + New Customer Sales i[LightTruck\
+		]) * (1-Share of EV i[LightTruck]) ~~|
+Sales p[EVCar]=
+	(Total outflow p[Car]+Total outflow p[EVCar] + New Customer Sales i[Car]) * Share of EV i\
+		[Car] ~~|
+Sales p[EVLightTruck]=
+	(Total outflow p[LightTruck]+Total outflow p[EVLightTruck] + New Customer Sales i[LightTruck\
+		]) * Share of EV i[LightTruck]
+	~	vehicles/year
+	~	Sales of new vehicles
+	|
+
+New Customer Sales i[Car]=
+	Total fleet * Aggregate Market Growth Rate * Share of Cars in the Fleet ~~|
+New Customer Sales i[LightTruck]=
+	Total fleet * Aggregate Market Growth Rate * (1-Share of Cars in the Fleet)
+	~	vehicle/year
+	~	Additional sales of new vehicles due to market growth
+	|
+
+GHG Emissions EV Effective e[EV]=
+	IF THEN ELSE
+	  (SW EV Renewable Electricity = 1 :AND: Time >= Year of Fully Renewable Electricity\
+		,
+	   0,
+	   GHG Emissions EV e[EV]
+	  )
+	~	grams CO2/mile
+	~	Effective emissions factor of electricity mix
+	|
+
+Emissions Introduction p 0[ICE]=
+	Sales p 0[ICE] * "New Vehicle Emissions CAFE + EV p"[ICE] ~~|
+Emissions Introduction p 0[EV]=
+	Sales p 0[EV] * GHG Emissions EV e[EV]
+	~	grams CO2/mile*vehicles/year
+	~	The increase in emissions due to new vehicle sales, reference
+	|
+
+GHG Emissions EV e[EV]=
+	("GHG Emissions Factor - Renewables"*Green Electricity Share + "GHG Emissions Factor - Grid Mix"\
+		*(1-Green Electricity Share)) * EV Energy Efficiency e[EV]
+	~	grams CO2/mile
+	~	Emissions factor of electricity mix
+	|
+
+Annual EV Sales 0=
+	SUM(Sales p 0[EV!])
+	~	vehicle/year
+	~	Annual local sales of EVs, reference
+	|
+
+Year of Fully Renewable Electricity=
+	2030
+	~	year [2019,2050]
+	~	Year when the EV recharging can be 100% renewable
+	|
+
+Fuel Savings from Driving EV e 0[EV]=
+	Cost of Driving ICE i 0[ICE] - Cost of Driving EV e 0[EV]
+	~	$/(year*vehicle)
+	~	Fuel savings from driving EV vs ICE vehicle, reference
+	|
+
+Cost of Driving EV e 0[EV]=
+	Energy Consumption EV e[EV] * Grid Electricity Cost * Average VMT
+	~	$/(year*vehicle)
+	~	Cost of driving an EV, reference
+	|
+
+Relative Fuel Savings from Driving EV e 0[EV]=
+	Fuel Savings from Driving EV e 0[EV] / Cost of Driving ICE i 0[ICE]
+	~	dmnl
+	~	Fuel savings from driving EV relative to ICE, reference
+	|
+
+Grid Electricity Cost=
+	0.15
+	~	$/(kW*hour)
+	~	Grid cost of electricity used for recharging EVs
+	|
+
+Renewable Electricity Surcharge=
+	0
+	~	$/(kW*hour) [0,1]
+	~	Additional surcharge for renewable electricity used for recharging EVs
+	|
+
+Price Surcharge of EVs relative to ICE 0=
+	Initial Price Surcharge of EVs relative to ICE * Effect of World Learning on Price *\
+		 Effect of Learning on Price 0
+	~	dmnl
+	~	Price multiplier of EV vs. ICE vehicle, reference
+	|
+
+Effect of Learning on Market Formation 0=
+	(Cumulative EV Sales 0 / Reference Cumulative EV Sales)^LOG(1-Learning Curve Strength Market Formation\
+		, 2)
+	~	dmnl
+	~	Effect of learning on EV market formation, reference
+	|
+
+Effect of Learning on Price 0=
+	(Cumulative EV Sales 0 / Reference Cumulative EV Sales)^LOG(1-Learning Curve Strength Price\
+		, 2)
+	~	dmnl
+	~	Effect of local learning on EV price, reference
+	|
+
+Cumulative EV Sales 0= INTEG (
+	Annual EV Sales 0,
+		Reference Cumulative EV Sales)
+	~	vehicle
+	~	Cumulatve local sales of EVs, reference
+	|
+
+Inconvenience of EV e 0[EV]=
+	Ref Inconvenience of EV e[EV] * Effect of Learning on Market Formation 0
+	~	dmnl
+	~	Inconvenience of EVs (short range, long recharging time, lack if \
+		recharging infrastructure etc.), reference
+	|
+
+Annual Cost of C4C Program=
+	(SUM(C4C Replacement Sales p[ICE!]) + SUM(C4C Replacement Sales p[EV!])) * C4C Incentive Value
+	~	$/year
+	~	Annual cost of the C4C program
+	|
+
+Reference C4C EV Incentive Value=
+	20000
+	~	$/vehicle
+	~	Reference value of C4C incentive for EVs
+	|
+
+Combined Effect of EV on C4C Hazard Rate i[ICE]=
+	Effect of C4C EV Incentive on C4C Hazard Rate * Effect of Additional Fuel Savings from driving EV vs ICE on C4C Hazard Rate i\
+		[ICE]
+	~	dmnl
+	~	Combined effect on propensity to participate in the C4C program for EVs
+	|
+
+Price Surcharge of EVs relative to ICE=
+	Initial Price Surcharge of EVs relative to ICE * Effect of Learning on Price * Effect of World Learning on Price
+	~	dmnl
+	~	Price multiplier of EV vs. ICE vehicle
+	|
+
+Cost of Driving ICE i 0[ICE]=
+	Average VMT * Baseline Fuel Price * New Vehicle ICE Fuel Consumption CAFE i[ICE]
+	~	$/(year*vehicle)
+	~	Cost of driving an ICE vehicle, reference
+	|
+
+Inconvenience of EV e[EV]=
+	Ref Inconvenience of EV e[EV] * Effect of Learning on Market Formation
+	~	dmnl
+	~	Inconvenience of EVs (short range, long recharging time, lack if \
+		recharging infrastructure etc.)
+	|
+
+C4C Hazard Rate ai[Age, ICE]=
+	IF THEN ELSE
+	  (Age < Minimum Age to Qualify for C4C :OR: Flag C4C Active = 0,
+	    0,
+	    IF THEN ELSE
+	      (SW C4C must buy EVs = 1,
+	       MIN(Combined Effect of EV on C4C Hazard Rate i[ICE] * Reference C4C Hazard Rate ai\
+		[Age,ICE], 1),
+	       MIN(Combined Effect of ICE on C4C Hazard Rate i[ICE] * Reference C4C Hazard Rate ai\
+		[Age,ICE], 1)
+	      )
+	  )
+	~	dmnl/year
+	~	Effective propensity of participation in the C4C program
+	|
+
+Effect of C4C EV Incentive on C4C Hazard Rate=
+	(C4C Incentive Value / Reference C4C EV Incentive Value) ^ Sensitivity of Incentive Effect
+	~	dmnl
+	~	Effect of C4C incentive on propensity to participate in the C4C program \
+		for EVs
+	|
+
+Effect of Additional Fuel Savings from driving EV vs ICE on C4C Hazard Rate i[ICE]=
+	(1+Relative Fuel Savings from Driving EV e[EV]) ^ Sensitivity of Fuel Savings Effect
+	~	dmnl
+	~	Effect of fuel savings on propensity to participate in the C4C program for \
+		EVs
+	|
+
+Share of EV i 0[ICE]=
+	EXP(Utility of EV e 0[EV]*Logit Choice Scaling) / (EXP(Utility of EV e 0[EV]*Logit Choice Scaling\
+		)+EXP(Utility of ICE i[ICE]*Logit Choice Scaling))
+	~	dmnl
+	~	Share of EVs in new vehicle sales, reference
+	|
+
+C4C Replacement Sales p[Car]=
+	SUM(C4C Discards ap[Age!, Car]) * 
+	IF THEN ELSE
+	  (SW C4C must buy EVs = 1,
+	   0,
+	   (1-Share of EV i[Car])
+	  ) ~~|
+C4C Replacement Sales p[LightTruck]=
+	SUM(C4C Discards ap[Age!, LightTruck]) * 
+	IF THEN ELSE
+	  (SW C4C must buy EVs = 1,
+	   0,
+	   (1-Share of EV i[LightTruck])
+	  ) ~~|
+C4C Replacement Sales p[EVCar]=
+	SUM(C4C Discards ap[Age!, Car]) * 
+	IF THEN ELSE
+	  (SW C4C must buy EVs = 1,
+	   1,
+	   Share of EV i[Car]
+	  ) ~~|
+C4C Replacement Sales p[EVLightTruck]=
+	SUM(C4C Discards ap[Age!, LightTruck]) * 
+	IF THEN ELSE
+	  (SW C4C must buy EVs = 1,
+	   1,
+	   Share of EV i[LightTruck]
+	  )
+	~	vehicle/year
+	~	The inflow of replacemnet sales due to C4C program
+	|
+
+Effect of Additional Fuel Savings from Driving C4C vs CAFE on C4C Hazard Rate i[ICE]=
+	(1+Relative Fuel Savings from Driving C4C vs CAFE i[ICE]) ^ Sensitivity of Fuel Savings Effect
+	~	dmnl
+	~	Effect of fuel savings on propensity to participate in the C4C program for \
+		ICE vehicles
+	|
+
+Combined Effect of ICE on C4C Hazard Rate i[ICE]=
+	Effect of Additional Fuel Savings from Driving C4C vs CAFE on C4C Hazard Rate i[ICE]\
+		 * Effect of C4C Incentive on C4C Hazard Rate * Effect of C4C Stringency on C4C Hazard Rate i\
+		[ICE]
+	~	dmnl
+	~	Combined effect on propensity to participate in the C4C program for ICE \
+		vehicles
+	|
+
+Average Fleet Emission Reduction Improvement=
+	Average Fleet Emission Reduction - Average Fleet Emission Reduction Reference
+	~	dmnl
+	~	Additional fleet emissions reduction (using average VMT)
+	~	:SUPPLEMENTARY 
+	|
+
+Effect of Learning on Price=
+	(Cumulative EV Sales / Reference Cumulative EV Sales)^LOG(1-Learning Curve Strength Price\
+		, 2)
+	~	dmnl
+	~	Effect of local learning on EV price
+	|
+
+Effect of World Learning on Price=
+	(Cumulative World EV Sales / Reference Cumulative World EV Sales)^LOG(1-Learning Curve Strength Price\
+		, 2)
+	~	dmnl
+	~	Effect of worldwide learning on EV price
+	|
+
+Initial Price Surcharge of EVs relative to ICE=
+	0.25
+	~	dmnl
+	~	Initial price multiplier of EV vs. ICE vehicle
+	|
+
+Ref Inconvenience of EV e[EV]=
+	-2
+	~	dmnl
+	~	Initial inconvenience of EVs (short range, long recharging time, lack if \
+		recharging infrastructure etc.)
+	|
+
+Reference Cumulative EV Sales=
+	1e+07
+	~	vehicles
+	~	Reference local sales of EVs
+	|
+
+Reference Cumulative World EV Sales=
+	1e+07
+	~	vehicles
+	~	Reference worldwide sales of EVs
+	|
+
+EV Market Growth Rate=
+	0.05
+	~	dmnl/year
+	~	Worldwide EV market growth rate
+	|
+
+Annual World EV Sales=
+	Cumulative World EV Sales * EV Market Growth Rate
+	~	vehicle/year
+	~	Annual worldwide sales of EVs
+	|
+
+Effect of Learning on Market Formation=
+	(Cumulative EV Sales / Reference Cumulative EV Sales)^LOG(1-Learning Curve Strength Market Formation\
+		, 2)
+	~	dmnl
+	~	Effect of learning on EV market formation
+	|
+
+Cumulative EV Sales= INTEG (
+	Annual EV Sales,
+		Reference Cumulative EV Sales)
+	~	vehicle
+	~	Cumulatve local sales of EVs
+	|
+
+Learning Curve Strength Price=
+	0.25
+	~	dmnl
+	~	Strength of the learning curve for price
+	|
+
+Cumulative World EV Sales= INTEG (
+	Annual World EV Sales,
+		Reference Cumulative World EV Sales)
+	~	vehicle
+	~	Cumulatve worldwide sales of EVs
+	|
+
+Learning Curve Strength Market Formation=
+	0.25
+	~	dmnl
+	~	Strength of the learning curve for market formation
+	|
+
+Annual EV Sales=
+	SUM(Sales p[EV!]+C4C Replacement Sales p[EV!])
+	~	vehicle/year
+	~	Annual local sales of EVs
+	|
+
+Reference C4C Hazard Rate ai[Age,ICE]=
+	Reference Hazard Rate i[ICE] * (Age^Sensitivity of Hazard Rate to Age)
+	~	dmnl/year
+	~	Propensity to participate in the C4C program
+	|
+
+Average Fleet Emission Reduction Reference=
+	(Initial Average Total Fleet Emissions Reference-Average Total Fleet Emissions Reference\
+		) / Initial Average Total Fleet Emissions Reference
+	~	dmnl
+	~	Fleet emissions reduction (using average VMT), reference
+	|
+
+Unit Cost of Emissions Reduction=
+	ZIDZ(Cumulative Cost of C4C Program-Cumulative Gas Tax Revenue, Cumulative Emissions Reduction\
+		*Tonnes per Billion Tonnes)
+	~	$/Tonne CO2
+	~	Unit cost of emissions reduction
+	~	:SUPPLEMENTARY 
+	|
+
+Initial Average Total Fleet Emissions= INITIAL(
+	Average Total Fleet Emissions)
+	~	Gigatonne CO2/year
+	~		|
+
+Initial Average Total Fleet Emissions Reference= INITIAL(
+	Average Total Fleet Emissions Reference)
+	~	Gigatonne CO2/year
+	~	Initial total emissions of the fleet (using average VMT)
+	|
+
+Average Fleet Emission Reduction=
+	(Initial Average Total Fleet Emissions-Average Total Fleet Emissions) / Initial Average Total Fleet Emissions
+	~	dmnl
+	~	Fleet emissions reduction (using average VMT)
+	|
+
+Average Fuel Economy ci[Emissions Cohort,ICE]=
+	ZIDZ(1,Average Fuel Consumption ci[Emissions Cohort,ICE])
+	~	mile/gallon
+	~	Average fuel economy of ICE vehicles by age
+	~	:SUPPLEMENTARY 
+	|
+
+Energy Consumption EV e[EV]=
+	Fuel Consumption of EV e[EV] * Native units to GGE Electricity
+	~	kW*hour/mile
+	~	Energy consumption of EVs
+	|
+
+EV:
+	EVCar,EVLightTruck->ICE
+	~	
+	~		|
+
+EV Energy Efficiency e[EV]=
+	Initial EV Energy Efficiency e[EV] * (1-RAMP("2050 EV Energy Efficiency increase"/(FINAL TIME\
+		-INITIAL TIME), INITIAL TIME , FINAL TIME ))
+	~	kW*hour/miles
+	~	Energy efficiency of EVs
+	|
+
+Cost of Driving EV e[EV]=
+	Energy Consumption EV e[EV] * Electricity Cost * Average VMT
+	~	$/(year*vehicle)
+	~	Cost of driving an EV
+	|
+
+Actual C4C Replacement Vehicles Emission p[ICE]=
+	ICE CO2 conversion factor / Actual C4C Fuel Economy of New Vehicles i[ICE] ~~|
+Actual C4C Replacement Vehicles Emission p[EV]=
+	GHG Emissions EV Effective e[EV]
+	~	grams CO2/mile
+	~	Actual emissions of C4C replacement vehicles
+	|
+
+Fuel Savings from Driving EV e[EV]=
+	Cost of Driving ICE i[ICE] - Cost of Driving EV e[EV]
+	~	$/(year*vehicle)
+	~	Fuel savings from driving EV vs ICE vehicle
+	|
+
+ICE:
+	Car,LightTruck->EV
+	~	
+	~		|
+
+Cost of Driving ICE i[ICE]=
+	Fuel Price Adjusted VMT * Real Fuel Price * New Vehicle ICE Fuel Consumption CAFE i[\
+		ICE]
+	~	$/(year*vehicle)
+	~	Cost of driving an ICE vehicle
+	|
+
+Share of EV i[ICE]=
+	EXP(Utility of EV e[EV]*Logit Choice Scaling) / (EXP(Utility of EV e[EV]*Logit Choice Scaling\
+		)+EXP(Utility of ICE i[ICE]*Logit Choice Scaling))
+	~	dmnl
+	~	Share of EVs in new vehicle sales
+	|
+
+Initial Emissions cp[Emissions Cohort,Car]=
+	GET XLS CONSTANTS(Excel Input,'Cars','Q2*') ~~|
+Initial Emissions cp[Emissions Cohort,LightTruck]=
+	GET XLS CONSTANTS(Excel Input,'LightTrucks','Q2*') ~~|
+Initial Emissions cp[Emissions Cohort,EVCar]=
+	GHG Emissions EV Effective e[EVCar]*Vehicle ~~|
+Initial Emissions cp[Emissions Cohort,EVLightTruck]=
+	GHG Emissions EV Effective e[EVLightTruck]*Vehicle
+	~	grams CO2/mile*vehicles
+	~	Initial emissions of vehicles by age cohort
+	|
+
+Relative Fuel Savings from Driving EV e[EV]=
+	Fuel Savings from Driving EV e[EV] / Cost of Driving ICE i[ICE]
+	~	dmnl
+	~	Fuel savings from driving EV relative to ICE
+	|
+
+New Vehicle Emissions Fleet Average p[Car]=
+	ZIDZ((Actual C4C Replacement Vehicles Emission p[Car]*C4C Replacement Sales p[Car] +\
+		 
+	      Actual C4C Replacement Vehicles Emission p[EVCar]*C4C Replacement Sales p[EVCar\
+		] + 
+	      "New Vehicle Emissions CAFE + EV p"[Car]*Sales p[Car] + "New Vehicle Emissions CAFE + EV p"\
+		[EVCar]*Sales p[EVCar]), 
+	(C4C Replacement Sales p[Car] + C4C Replacement Sales p[EVCar] + Sales p[Car] + Sales p\
+		[EVCar])) ~~|
+New Vehicle Emissions Fleet Average p[LightTruck]=
+	ZIDZ((Actual C4C Replacement Vehicles Emission p[LightTruck]*C4C Replacement Sales p\
+		[LightTruck] + 
+	      Actual C4C Replacement Vehicles Emission p[EVLightTruck]*C4C Replacement Sales p\
+		[EVLightTruck] + 
+	      "New Vehicle Emissions CAFE + EV p"[LightTruck]*Sales p[LightTruck] + "New Vehicle Emissions CAFE + EV p"\
+		[EVLightTruck]*Sales p[EVLightTruck]), 
+	(C4C Replacement Sales p[LightTruck] + C4C Replacement Sales p[EVLightTruck] + Sales p\
+		[LightTruck] + Sales p[EVLightTruck]))
+	~	grams CO2/mile
+	~	Average emissions of a new vehicle
+	~	:SUPPLEMENTARY 
+	|
+
+SW EV Renewable Electricity=
+	0
+	~	dmnl [0,1]
+	~	Switch to mandate fully renewable electricity for EV recharging
+	|
+
+"2050 EV Energy Efficiency increase"=
+	0
+	~	dmnl
+	~	Incerase in energy efficiency of EVs by 2050
+	|
+
+Initial EV Energy Efficiency e[EV]=
+	0.32, 0.45
+	~	kW*hour/miles
+	~	Initial energy efficiency of EVs
+	|
+
+SW C4C must buy EVs=
+	0
+	~	dmnl [0,1]
+	~	Switch to mandate that replacements under C4C program must be EVs
+	|
+
+Fleet ap 0[a0,Platform]= INTEG (
+	Sales p 0[Platform]-Fleet Aging ap 0[a0,Platform]-Retirements ap 0[a0,Platform],
+		Initial Fleet ap[a0,Platform]) ~~|
+Fleet ap 0[All but youngest,Platform]= INTEG (
+	Fleet Aging ap 0[All but oldest,Platform]-Fleet Aging ap 0[All but youngest,Platform\
+		]-Retirements ap 0[All but youngest
+	,Platform],
+		Initial Fleet ap[All but youngest,Platform])
+	~	vehicles
+	~	The stock of vehicles in the fleet, reference
+	|
+
+Weight of Price Surcharge=
+	-1
+	~	dmnl
+	~	weight of price in the utility
+	|
+
+Fuel Consumption of EV e[EV]=
+	"New Vehicle Fuel Consumption CAFE + EV p"[EV]
+	~	gallon/mile
+	~	Energy consumption of EVs in GGE
+	|
+
+Logit Choice Scaling=
+	2
+	~	dmnl
+	~	Sensitiviy of the logit model to a difference in utilities
+	|
+
+Max Share Renewables=
+	0.9
+	~	dmnl
+	~	Max share of renewable power generation by 2050
+	|
+
+Total New Vehicle Sales Reference=
+	SUM(Sales p 0[Platform!])
+	~	vehicles/year
+	~	Total sales of new vehicles, reference
+	~	:SUPPLEMENTARY 
+	|
+
+"GHG Emissions Factor - Grid Mix"=
+	689.27
+	~	grams CO2/(kW*hour)
+	~	Emissions factor of grid electricity
+	|
+
+"GHG Emissions Factor - Renewables"=
+	0
+	~	grams CO2/(kW*hour)
+	~	Emissions factor of renewable electricity
+	|
+
+Weight of Fuel Savings=
+	1
+	~	dmnl
+	~	Weight of fuel savings in the utility
+	|
+
+Green Electricity Share=
+	RAMP((Max Share Renewables-Current Share Renewables)/(FINAL TIME-INITIAL TIME), INITIAL TIME\
+		 , FINAL TIME)
+	~	dmnl
+	~		|
+
+Vehicle=
+	1
+	~	vehicle
+	~	A unit of one vehicle
+	|
+
+Current Share Renewables=
+	0.15
+	~	dmnl
+	~	Initial share of renewable power generation
+	|
+
+Native units to GGE Electricity=
+	33.7
+	~	kW*hour/gallon
+	~	Conversion from kWh to GGE
+	|
+
+Utility of ICE i[ICE]=
+	0,0
+	~	dmnl
+	~	Utility of an ICE vehicle
+	|
+
+"2050 Emissions Target CO2 per mile i"[ICE]= INITIAL(
+	Start Point p[ICE]*MAX(0,(1-"2050 reduction of emissions")))
+	~	g CO2/mile
+	~	Effective vehicle emissions in 2050
+	|
+
+Finish Point p[ICE]=
+	"2050 Emissions Target CO2 per mile i"[ICE]
+	~	grams CO2/mile
+	~	Vehicle emissions at the end point of the piecewise function that \
+		describes effective CAFE policy
+	|
+
+SAFE End Point Year=
+	2026
+	~	year
+	~	Year of the third point of the piecewise function that describes effective \
+		CAFE policy
+	|
+
+Sensitivity of C4C Stringency Effect=
+	-1.5
+	~	dmnl [-2,0]
+	~	Sensitivity of the effect of C4C stringency standards on propensity to \
+		participate in the C4C program (more stringent standards mean it is harder \
+		to find a car)
+	|
+
+Reference C4C Incentive Value=
+	4000
+	~	$/vehicle
+	~	Reference value of C4C incentive for ICE vehicles
+	|
+
+Effect of C4C Incentive on C4C Hazard Rate=
+	(C4C Incentive Value / Reference C4C Incentive Value) ^ Sensitivity of Incentive Effect
+	~	dmnl
+	~	Effect of C4C incentive on propensity to participate in the C4C program \
+		for ICE vehicles
+	|
+
+Aggregate Market Growth Rate=
+	0.01
+	~	dmnl/year [0,0.1]
+	~	Market growth rate
+	|
+
+Emission Introduction from C4C Replacement p[Platform]=
+	C4C Replacement Sales p[Platform] * Actual C4C Replacement Vehicles Emission p[Platform\
+		]
+	~	grams CO2*vehicle/(mile*year)
+	~	The increase in emissions due to replacement vehicles from C4C program
+	|
+
+Actual C4C Fuel Consumption of New Vehicles i[ICE]=
+	1 / Actual C4C Fuel Economy of New Vehicles i[ICE]
+	~	gallon/mile
+	~	Actual fuel consumption of C4C replacement vehicles
+	|
+
+Actual C4C Fuel Economy of New Vehicles i[ICE]=
+	C4C Required Fuel Economy of New Vehicles i[ICE] * (1 + C4C Average FE Shift i[ICE])
+	~	mile/gallon
+	~	Actual fuel economy of C4C replacement vehicles
+	|
+
+Flag C4C Active=
+	IF THEN ELSE
+	  (SW C4C Active = 0 :OR: Time < C4C Start Year :OR: Time > C4C End Year,
+	   0,
+	   1
+	  )
+	~	dmnl
+	~	Flag to indicate that C4C program is in effect
+	|
+
+Gas Tax=
+	IF THEN ELSE
+	  (Time < Gas Tax Ramp Start Year :OR: SW Gas Tax Active = 0,
+	   0,
+	   IF THEN ELSE
+	     (Time > Gas Tax Ramp End Year,
+	      Gas Tax End Value,
+	      Gas Tax Start Value + (Time-Gas Tax Ramp Start Year) * (Gas Tax End Value - Gas Tax Start Value\
+		) / (Gas Tax Ramp End Year - Gas Tax Ramp Start Year)
+	     )
+	  )
+	~	$/gallon
+	~	Gas tax
+	|
+
+SW C4C Active=
+	0
+	~	dmnl [0,1]
+	~	Switch to activate the C4C program
+	|
+
+SW Gas Tax Active=
+	0
+	~	dmnl [0,1]
+	~	Switch to activate gas tax
+	|
+
+Gas Tax Ramp End Year=
+	2050
+	~	year [2018,2050]
+	~	End year of gas tax
+	|
+
+Gas Tax Start Value=
+	0
+	~	$/gallon [0,2]
+	~	Gas tax in start year
+	|
+
+Gas Tax Ramp Start Year=
+	2020
+	~	year [2018,2050]
+	~	Start year of gas tax
+	|
+
+Gas Tax End Value=
+	0.3
+	~	$/gallon [0,2]
+	~	Gas tax in end year
+	|
+
+Total Fuel Consumption ai[Age,ICE]=
+	Average Miles Driven ai[Age,ICE] * Fuel Consumption ai[Age,ICE]
+	~	gallon/year
+	~	Total fuel consumption of ICE vehicles
+	|
+
+Average Miles Driven ai[Age,ICE]=
+	Fleet ap[Age,ICE] * Fuel Price Adjusted VMT
+	~	mile/year
+	~	Average VMT of ICE vehicles
+	|
+
+Average Annual Emissions per Vehicle C4C=
+	SUM(Emissions cp[Emissions Cohort!,Platform!]) * Fuel Price Adjusted VMT / SUM(Fleet ap\
+		[Age!,Platform!]) / Grams CO2 per Tonne CO2
+	~	Tonnes CO2/(vehicle*year)
+	~	Annual emissions of a vehicle when C4C program is active (using average \
+		VMT)
+	~	:SUPPLEMENTARY 
+	|
+
+Average Total Fleet Emissions=
+	SUM(Emissions cp[Emissions Cohort!,Platform!]) * Fuel Price Adjusted VMT / Grams CO2 per Gigatonne CO2
+	~	Gigatonnes CO2/year
+	~	Total emissions of the fleet (using average VMT)
+	|
+
+Cumulative Gas Tax Revenue= INTEG (
+	Annual Gas Tax Revenue,
+		0)
+	~	$
+	~	Cumulative revenue from gas tax
+	|
+
+Annual Gas Tax Revenue=
+	SUM(Total Fuel Consumption ai[Age!,ICE!]) * Gas Tax
+	~	$/year
+	~	Annual revenue from gas tax
+	|
+
+Fuel Consumption ai[Age,ICE]=
+	ZIDZ(Emissions cp[Emissions Cohort,ICE],Fleet ap[Age,ICE]) / ICE CO2 conversion factor
+	~	gallon/mile
+	~	Fuel consumption of an ICE vehicle by age and platform
+	|
+
+Reference Hazard Rate i[ICE]=
+	0.002,0.002
+	~	dmnl/year
+	~	Reference propensity to participate in the C4C program
+	|
+
+Real Fuel Price=
+	Baseline Fuel Price + Gas Tax
+	~	$/gallon [0,10]
+	~	Actual fuel price
+	|
+
+C4C Average FE Shift i[ICE]=
+	Reference C4C Average FE Shift * Effect of C4C Stringency on Addressable Market i[ICE\
+		]
+	~	dmnl
+	~	Actual increase in fuel economy relative to mandated C4C fuel economy \
+		(available vehicles can do better)
+	|
+
+Fuel Price Adjusted VMT Multiplier=
+	(Real Fuel Price / Baseline Fuel Price) ^ Elasticity of VMT to Fuel Price
+	~	dmnl
+	~	Effect of fuel price on VMT
+	|
+
+Sensitivity of Addressable Market to C4C Stringency=
+	-0.75
+	~	dmnl
+	~	Sensitivity of the effect of addressable market (available makes and \
+		models) satisfying C4C standard stringency
+	|
+
+Increase in Cumulative Emissions Reference=
+	Average Total Fleet Emissions Reference
+	~	Gigatonnes CO2/year
+	~	Increase in the cumulative emissions of the fleet, reference
+	|
+
+Fuel Price Adjusted VMT=
+	Average VMT * Fuel Price Adjusted VMT Multiplier
+	~	mile/(year*vehicle)
+	~	Average VMT adjusted by real fuel price
+	|
+
+Reference C4C Average FE Shift=
+	0.05
+	~	dmnl
+	~	Reference increase in fuel economy relative to mandated C4C fuel economy \
+		(available vehicles can do better)
+	|
+
+Baseline Fuel Price=
+	3
+	~	$/gallon
+	~	Baseline fuel price (before additional gas tax)
+	|
+
+Cumulative Emissions= INTEG (
+	Increase in Cumulative Emissions,
+		0)
+	~	Gigatonnes CO2
+	~	Cumulative emissions of the fleet
+	|
+
+Increase in Cumulative Emissions=
+	Average Total Fleet Emissions
+	~	Gigatonnes CO2/year
+	~	Increase in the cumulative emissions of the fleet
+	|
+
+Tonnes per Billion Tonnes=
+	1e+09
+	~	Tonnes CO2/Gigatonne CO2
+	~	Conversion from tonnes to gigatonnes
+	|
+
+Cumulative Emissions Reduction=
+	Cumulative Emissions Reference - Cumulative Emissions
+	~	Gigatonnes CO2
+	~	Reduction in cumulative emissions relative to reference
+	|
+
+Elasticity of VMT to Fuel Price=
+	-0.3
+	~	dmnl
+	~	Elasticiy of VMT to fuel price
+	|
+
+Cumulative Emissions Reference= INTEG (
+	Increase in Cumulative Emissions Reference,
+		0)
+	~	Gigatonnes CO2
+	~	Cumulative emissions of the fleet, reference
+	|
+
+Average Annual Emissions per Vehicle Reference=
+	SUM(Emissions cp 0[Emissions Cohort!,Platform!]) * Average VMT / SUM(Fleet ap 0[Age!\
+		,Platform!]) / Grams CO2 per Tonne CO2
+	~	Tonnes CO2/(vehicle*year)
+	~	Annual emissions of a vehicle when C4C program is active (using average \
+		VMT), reference
+	~	:SUPPLEMENTARY 
+	|
+
+Average Total Fleet Emissions Reference=
+	SUM(Emissions cp 0[Emissions Cohort!,Platform!]) * Average VMT / Grams CO2 per Gigatonne CO2
+	~	Gigatonnes CO2/year
+	~	Total emissions of the fleet (using average VMT), reference
+	|
+
+Total Fleet Emissions Reference=
+	SUM(Emissions cp 0[Emissions Cohort!,Platform!]*VMT cp[Emissions Cohort!,Car]) / Grams CO2 per Gigatonne CO2
+	~	Gigatonnes CO2/year
+	~	Total emissions of the fleet (using VMT by age cohort), reference
+	~	:SUPPLEMENTARY 
+	|
+
+Grams CO2 per Gigatonne CO2=
+	1e+15
+	~	grams CO2/Gigatonne CO2
+	~	Conversion from grams to gigatonnes
+	|
+
+Annual Emissions per Vehicle C4C=
+	SUM(Emissions cp[Emissions Cohort!,Platform!]*VMT cp[Emissions Cohort!,Platform!]) /\
+		 SUM(Fleet ap[Age!,Platform!]) / Grams CO2 per Tonne CO2
+	~	Tonnes CO2/(vehicle*year)
+	~	Annual emissions of a vehicle when C4C program is active (using VMT by age \
+		cohort)
+	~	:SUPPLEMENTARY 
+	|
+
+Annual Emissions per Vehicle Reference=
+	SUM(Emissions cp 0[Emissions Cohort!,Platform!]*VMT cp[Emissions Cohort!,Platform!])\
+		 / SUM(Fleet ap 0[Age!,Platform!]) / Grams CO2 per Tonne CO2
+	~	Tonnes CO2/(vehicle*year)
+	~	Annual emissions of a vehicle when C4C program is active (using VMT by age \
+		cohort), reference
+	~	:SUPPLEMENTARY 
+	|
+
+Grams CO2 per Tonne CO2=
+	1e+06
+	~	grams CO2/Tonne CO2
+	~	Conversion from grams to tonnes
+	|
+
+Total Fleet Emissions C4C=
+	SUM(Emissions cp[Emissions Cohort!,Platform!]*VMT cp[Emissions Cohort!,Platform!]) /\
+		 Grams CO2 per Gigatonne CO2
+	~	Gigatonnes CO2/year
+	~	Total emissions of the fleet (using VMT by age cohort)
+	~	:SUPPLEMENTARY 
+	|
+
+VMT cp[Emissions Cohort,Car]=
+	GET XLS CONSTANTS(Excel Input,'Cars','E2*') ~~|
+VMT cp[Emissions Cohort,LightTruck]=
+	GET XLS CONSTANTS(Excel Input,'LightTrucks','E2*') ~~|
+VMT cp[Emissions Cohort,EVCar]=
+	GET XLS CONSTANTS(Excel Input,'Cars','E2*') ~~|
+VMT cp[Emissions Cohort,EVLightTruck]=
+	GET XLS CONSTANTS(Excel Input,'LightTrucks','E2*')
+	~	miles/year/vehicle
+	~	VMT of vehicles by age cohort
+	|
+
+Average Fuel Consumption Reference=
+	Average Fleet Emissions 0/ICE CO2 conversion factor
+	~	gallon/mile
+	~	Average fuel consumption of a vehicle, reference
+	|
+
+Average Fuel Economy Reference=
+	1 / Average Fuel Consumption Reference
+	~	miles/gallon
+	~	Average fuel economy of a vehicle, reference
+	~	:SUPPLEMENTARY 
+	|
+
+C4C End Year=
+	2030
+	~	year [2018,2050]
+	~	Stop year of the C4C program
+	|
+
+C4C Start Year=
+	2020
+	~	year [2018,2050]
+	~	Start year of the C4C program
+	|
+
+Emissions Cohort Progression cp 0[Emissions Cohort,Platform]=
+	Fleet Aging ap 0[Age,Platform]*Average Emissions cp 0[Emissions Cohort,Platform]
+	~	grams CO2/mile*vehicles/year
+	~	Change in emissions due to vehicle aging, reference
+	|
+
+Average Age of Fleet Reference=
+	SUM(Total Age ap 0[Age!,Platform!]) / SUM(Fleet ap 0[Age!,Platform!])
+	~	years
+	~	Average age of vehicles in the fleet, reference
+	~	:SUPPLEMENTARY 
+	|
+
+Emissions cp 0[c0,Platform]= INTEG (
+	Emissions Introduction p 0[Platform]-Emissions Cohort Progression cp 0[c0,Platform]-\
+		Emissions Phase Out cp 0[c0,Platform
+	],
+		Initial Emissions cp[c0,Platform]) ~~|
+Emissions cp 0[All but first,Platform]= INTEG (
+	Emissions Cohort Progression cp 0[All but last,Platform]-Emissions Cohort Progression cp 0\
+		[All but first,Platform]-
+	Emissions Phase Out cp 0[All but first,Platform],
+		Initial Emissions cp[All but first,Platform])
+	~	vehicles*grams CO2/mile
+	~	The emissions of vehicles by age cohort, reference
+	|
+
+Average Emissions cp 0[Emissions Cohort,Platform]=
+	ZIDZ(Emissions cp 0[Emissions Cohort,Platform],Fleet ap 0[Age,Platform])
+	~	grams CO2/mile
+	~	Average emissions by age and platform, reference
+	|
+
+Average Fleet Emissions 0=
+	SUM(Emissions cp 0[Emissions Cohort!,Platform!])/SUM(Fleet ap 0[Age!,Platform!])
+	~	grams CO2/mile
+	~	Average emissions of a vehicle, reference
+	|
+
+Emissions Phase Out cp 0[Emissions Cohort,Platform]=
+	Retirements ap 0[Age,Platform]*Average Emissions cp 0[Emissions Cohort,Platform]
+	~	grams CO2/mile*vehicles/year
+	~	The reduction in fleet emissions due to retirements of vehicles, reference
+	|
+
+Total outflow p 0[Platform]=
+	SUM(Retirements ap 0[Age!,Platform])+Fleet Aging ap 0[a30,Platform]
+	~	vehicles/year
+	~	Total outflow from the fleet that needs to be replaced, reference
+	|
+
+share of cars in the fleet 0=
+	(Total fleet p 0[Car]+Total fleet p 0[EVCar]) / SUM(Total fleet p 0[Platform!])
+	~	dmnl
+	~		|
+
+Fleet Aging ap 0[Age,Platform]=
+	Fleet ap 0[Age,Platform]/Average Time Per Age[Age]
+	~	vehicles/year
+	~	The flow of vehicles between age cohorts, reference
+	|
+
+Total fleet p 0[Platform]=
+	SUM(Fleet ap 0[Age!,Platform])
+	~	vehicles
+	~		|
+
+Retirements ap 0[Age,Platform]=
+	Fleet ap 0[Age,Platform]*Hazard Rate ap[Age,Platform]
+	~	vehicles/year
+	~	The outflow of retirements from the fleet, reference
+	|
+
+Total Age ap 0[Age,Platform]=
+	Fleet ap 0[Age,Platform]*Age*Year
+	~	vehicle*year
+	~	Total age of all vehicles in the fleet, reference
+	|
+
+Total fleet 0=
+	SUM(Total fleet p 0[Platform!])
+	~	vehicles
+	~		|
+
+Total New Vehicle Sales C4C=
+	SUM(Sales p[Platform!]+C4C Replacement Sales p[Platform!])
+	~	vehicles/year
+	~	Total sales of new vehicles
+	~	:SUPPLEMENTARY 
+	|
+
+Year=
+	1
+	~	year
+	~	A unit of one year
+	|
+
+Average Age of Fleet C4C=
+	SUM(Total Age ap[Age!,Platform!]) / SUM(Fleet ap[Age!,Platform!])
+	~	years
+	~	Average age of vehicles in the fleet
+	~	:SUPPLEMENTARY 
+	|
+
+Average Fuel Economy C4C=
+	1 / Average Fuel Consumption C4C
+	~	miles/gallon
+	~	Average fuel economy of a vehicle
+	~	:SUPPLEMENTARY 
+	|
+
+Total Age ap[Age,Platform]=
+	Fleet ap[Age,Platform]*Age*Year
+	~	vehicle*year
+	~	Total age of all vehicles in the fleet
+	|
+
+Annual Retirements C4C=
+	SUM(C4C Discards ap[Age!,Platform!])
+	~	vehicles/year
+	~	Annual retirements of all vehicles under C4C program
+	|
+
+Cumulative Cost of C4C Program= INTEG (
+	Annual Cost of C4C Program,
+		0)
+	~	$
+	~	Cumulative cost of the C4C program
+	|
+
+Cumulative Retirements C4C= INTEG (
+	Annual Retirements C4C,
+		0)
+	~	vehicles
+	~	Cumulative retirements of all vehicles under C4C program
+	~	:SUPPLEMENTARY 
+	|
+
+Fleet ap[a0,Platform]= INTEG (
+	Sales p[Platform]+C4C Replacement Sales p[Platform]-Fleet Aging ap[a0,Platform]-Retirements ap\
+		[a0,Platform]-C4C Discards ap[a0,Platform],
+		Initial Fleet ap[a0,Platform]) ~~|
+Fleet ap[All but youngest,Platform]= INTEG (
+	Fleet Aging ap[All but oldest,Platform]-Fleet Aging ap[All but youngest,Platform]-Retirements ap\
+		[All but youngest,Platform] - C4C Discards ap[All but youngest,Platform],
+		Initial Fleet ap[All but youngest,Platform])
+	~	vehicles
+	~	The stock of vehicles in the fleet
+	|
+
+Minimum Age to Qualify for C4C=
+	5
+	~	years [1,31]
+	~	Minimum vehicle age to qualify for the C4C program
+	|
+
+Emissions cp[c0,Platform]= INTEG (
+	Emissions Introduction p[Platform]+Emission Introduction from C4C Replacement p[Platform\
+		]-Emissions Cohort Progression cp[c0,Platform]-Emissions Phase Out cp[c0,Platform] \
+		- Emissions out due to C4C cp[c0,Platform],
+		Initial Emissions cp[c0,Platform]) ~~|
+Emissions cp[All but first,Platform]= INTEG (
+	Emissions Cohort Progression cp[All but last,Platform]-Emissions Cohort Progression cp\
+		[All but first,Platform]-
+	Emissions Phase Out cp[All but first,Platform] - Emissions out due to C4C cp[All but first\
+		,Platform],
+		Initial Emissions cp[All but first,Platform])
+	~	vehicles*grams CO2/mile
+	~	The emissions of vehicles by age cohort
+	|
+
+Total outflow p[Platform]=
+	SUM(Retirements ap[Age!,Platform])+Fleet Aging ap[a30,Platform]
+	~	vehicles/year
+	~	Total outflow from the fleet that needs to be replaced
+	|
+
+Average VMT=
+	11525
+	~	miles/year/vehicle
+	~	Average VMT of a vehicle
+	|
+
+C4C Incentive Value=
+	4000
+	~	$/vehicle [0,15000]
+	~	C4C program incentive
+	|
+
+Emissions out due to C4C cp[Emissions Cohort,Platform]=
+	C4C Discards ap[Age,Platform] * Average Emissions cp[Emissions Cohort,Platform]
+	~	grams CO2/mile*vehicles/year
+	~	The reduction in fleet emissions due to discards from C4C program
+	|
+
+C4C Discards ap[Age,ICE]=
+	Fleet ap[Age,ICE] * C4C Hazard Rate ai[Age,ICE] ~~|
+C4C Discards ap[Age,EV]=
+	0
+	~	vehicles/year
+	~	The outflow of vehicles due to C4C program
+	|
+
+Average Fuel Consumption ci[Emissions Cohort,ICE]=
+	Average Emissions cp[Emissions Cohort,ICE] / ICE CO2 conversion factor
+	~	gallon/mile
+	~	Average fuel consumption of ICE vehicles by age
+	|
+
+"2050 reduction of emissions"=
+	0.3
+	~	dmnl [0,0.95]
+	~	Reduction in emissions by 2050 relative to 2018 - about 1% per year
+	|
+
+ICE CO2 conversion factor=
+	8887
+	~	grams CO2/gallon
+	~	Carbon content in a gallon of gasoline
+	|
+
+Average Fuel Consumption C4C=
+	Average Fleet Emissions/ICE CO2 conversion factor
+	~	gallon/mile
+	~	Average fuel consumption of a vehicle
+	|
+
+Emissions Introduction p[Platform]=
+	Sales p[Platform]*"New Vehicle Emissions CAFE + EV p"[Platform]
+	~	grams CO2/mile*vehicles/year
+	~	The increase in emissions due to new vehicle sales
+	|
+
+Average Fleet Emissions=
+	SUM(Emissions cp[Emissions Cohort!,Platform!])/SUM(Fleet ap[Age!,Platform!])
+	~	grams CO2/mile
+	~	Average emissions of a vehicle
+	|
+
+Share of Cars in the Fleet=
+	(Total fleet p[Car]+Total fleet p[EVCar]) / SUM(Total fleet p[Platform!])
+	~	dmnl
+	~	Share of cars vs. light trucks in the fleet
+	|
+
+Total fleet=
+	SUM(Total fleet p[Platform!])
+	~	vehicles
+	~	Total fleet of vehicles
+	|
+
+Emissions Cohort Progression cp[Emissions Cohort,Platform]=
+	Fleet Aging ap[Age,Platform]*Average Emissions cp[Emissions Cohort,Platform]
+	~	grams CO2/mile*vehicles/year
+	~	Change in emissions due to vehicle aging
+	|
+
+Emissions Phase Out cp[Emissions Cohort,Platform]=
+	Retirements ap[Age,Platform]*Average Emissions cp[Emissions Cohort,Platform]
+	~	grams CO2/mile*vehicles/year
+	~	The reduction in fleet emissions due to retirements of vehicles
+	|
+
+Average Emissions cp[Emissions Cohort,Platform]=
+	ZIDZ(Emissions cp[Emissions Cohort,Platform],Fleet ap[Age,Platform])
+	~	grams CO2/mile
+	~	Average emissions by age and platform
+	|
+
+Hazard Rate ap[Age,Car]=
+	GET XLS CONSTANTS(Excel Input,'Cars','D2*') ~~|
+Hazard Rate ap[Age,LightTruck]=
+	GET XLS CONSTANTS(Excel Input,'LightTrucks','D2*') ~~|
+Hazard Rate ap[Age,EVCar]=
+	GET XLS CONSTANTS(Excel Input,'Cars','D2*') ~~|
+Hazard Rate ap[Age,EVLightTruck]=
+	GET XLS CONSTANTS(Excel Input,'LightTrucks','D2*')
+	~	dmnl/year
+	~	Year to year hazard rate of discards for cars and light trucks
+	|
+
+Initial Fleet ap[Age,Car]=
+	GET XLS CONSTANTS(Excel Input,'Cars','G2*') ~~|
+Initial Fleet ap[Age,LightTruck]=
+	GET XLS CONSTANTS(Excel Input,'LightTrucks','G2*') ~~|
+Initial Fleet ap[Age,EVCar]=
+	0 ~~|
+Initial Fleet ap[Age,EVLightTruck]=
+	0
+	~	vehicles
+	~	The initial level of vehicles in each age cohort
+	|
+
+Excel Input:IS:
+	'Fleet Model Inputs - Oak Ridge data v8 c4c JOM dynamic equilibrium.xlsx'
+	~	
+	~	The input file name
+	|
+
+Total fleet p[Platform]=
+	SUM(Fleet ap[Age!,Platform])
+	~	vehicles
+	~	Total fleet of vehicles by platform
+	|
+
+Fleet Aging ap[Age,Platform]=
+	Fleet ap[Age,Platform]/Average Time Per Age[Age]
+	~	vehicles/year
+	~	The flow of vehicles between age cohorts
+	|
+
+Retirements ap[Age,Platform]=
+	Fleet ap[Age,Platform]*Hazard Rate ap[Age,Platform]
+	~	vehicles/year
+	~	The outflow of retirements from the fleet
+	|
+
+Age:
+	(a0-a30)->Emissions Cohort
+	~	
+	~		|
+
+All but first:
+	(c1-c30)->All but last
+	~	
+	~		|
+
+All but last:
+	(c0-c29)->All but first
+	~	
+	~		|
+
+All but oldest:
+	(a0-a29)->All but youngest
+	~	
+	~		|
+
+All but youngest:
+	(a1-a30)->All but first
+	~	
+	~		|
+
+Average Time Per Age[Age]=
+	1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,5
+	~	year
+	~	Average tenure of vehicles in each age cohort
+	|
+
+Emissions Cohort:
+	(c0-c30)->Age
+	~	
+	~		|
+
+Platform:
+	Car, LightTruck, EVCar, EVLightTruck
+	~	
+	~		|
+
+********************************************************
+	.Control
+********************************************************~
+		Simulation Control Parameters
+	|
+
+FINAL TIME  = 2050
+	~	year
+	~	The final time for the simulation.
+	|
+
+INITIAL TIME  = 2018
+	~	year
+	~	The initial time for the simulation.
+	|
+
+SAVEPER  = 
+        TIME STEP
+	~	year [0,?]
+	~	The frequency with which output is stored.
+	|
+
+TIME STEP  = 0.125
+	~	year [0,?]
+	~	The time step for the simulation.
+	|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*ICE CoFlow
+$192-192-192,0,Arial|14|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,65,0
+12,1,0,123,164,142,107,3,135,0,0,-1,0,0,0,0,0,0,0,0,0
+ 
+10,2,Emissions cp,1429,688,61,30,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,3,48,1148,396,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,4,5,3,100,0,0,22,0,0,0,-1--1--1,,1|(1207,397)|
+11,5,48,1262,397,5,7,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,6,Sales p,1262,412,28,11,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,7,48,1393,241,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,8,9,7,4,0,0,22,0,0,0,-1--1--1,,1|(1391,265)|
+11,9,48,1391,286,5,4,33,131,0,0,2,0,0,0,0,0,0,0,0,0
+10,10,Retirements ap,1345,286,43,16,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,11,48,1189,702,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,12,14,2,4,0,0,22,0,0,0,-1--1--1,,1|(1311,699)|
+1,13,14,11,100,0,0,22,0,0,0,-1--1--1,,1|(1222,699)|
+11,14,48,1250,699,5,7,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,15,Emissions Introduction p,1250,724,53,18,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,16,48,1390,537,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,17,19,16,4,0,0,22,0,0,0,-1--1--1,,1|(1391,563)|
+1,18,19,2,100,0,0,22,0,0,0,-1--1--1,,1|(1391,624)|
+11,19,48,1391,586,7,5,33,131,0,0,2,0,0,0,0,0,0,0,0,0
+10,20,Emissions Phase Out cp,1339,586,47,16,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,21,Hazard Rate ap,1321,233,43,16,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-128-0,0,0,0,0,0,0
+11,22,5458,1612,378,5,7,34,131,0,0,1,0,0,0,0,0,0,0,0,0
+10,23,Fleet Aging ap,1612,402,47,17,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,24,26,2,36,0,0,22,2,0,0,-1--1--1,|14||0-0-0,1|(1541,675)|
+1,25,26,2,100,0,0,22,0,0,0,-1--1--1,,1|(1541,675)|
+11,26,5656,1598,675,5,7,34,131,0,0,1,0,0,0,0,0,0,0,0,0
+10,27,Emissions Cohort Progression cp,1598,700,70,19,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,28,Average Time Per Age,1634,297,48,16,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|0-128-0,0,0,0,0,0,0
+1,29,28,22,1,0,45,0,2,192,0,-1--1--1,|14||0-0-0,1|(1633,333)|
+10,30,Initial Fleet ap,1385,456,39,16,8,131,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-128-0,0,0,0,0,0,0
+10,31,Initial Emissions cp,1391,755,48,16,8,131,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-128-0,0,0,0,0,0,0
+10,32,Fleet ap,1421,382,71,28,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,33,5,32,4,0,0,22,0,0,0,-1--1--1,,1|(1308,397)|
+1,34,9,32,100,0,0,22,0,0,0,-1--1--1,,1|(1391,322)|
+1,35,22,32,36,0,0,22,0,0,0,-1--1--1,,1|(1549,378)|
+1,36,22,32,36,0,0,22,0,0,0,-1--1--1,,1|(1549,378)|
+1,37,32,22,1,0,43,0,2,192,0,-1--1--1,|14||0-0-0,1|(1532,345)|
+1,38,32,10,1,0,43,0,2,64,0,-1--1--1,|14||0-0-0,1|(1355,348)|
+12,39,48,1682,678,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,40,26,39,68,0,0,22,2,0,0,-1--1--1,|14||0-0-0,1|(1637,675)|
+12,41,48,1702,378,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,42,22,41,4,0,0,22,0,0,0,-1--1--1,,1|(1654,378)|
+10,43,Total outflow p,1140,424,34,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,44,Total fleet p,1637,224,41,9,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,45,32,44,0,0,0,0,0,192,0,-1--1--1,,1|(1535,297)|
+10,46,Fleet Aging ap,1032,442,44,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,47,46,43,0,0,0,0,0,192,0,-1--1--1,,1|(1084,433)|
+10,48,Retirements ap,1033,395,47,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,49,48,43,0,0,0,0,0,192,0,-1--1--1,,1|(1086,408)|
+1,50,30,32,0,0,0,0,0,64,1,-1--1--1,,1|(1396,431)|
+1,51,31,2,0,0,0,0,0,64,1,-1--1--1,,1|(1402,734)|
+10,52,Retirements ap,1310,516,47,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,53,52,20,1,0,0,0,0,192,0,-1--1--1,,1|(1293,546)|
+10,54,Average Emissions cp,1538,499,48,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,55,32,54,1,0,0,0,0,192,0,-1--1--1,,1|(1538,448)|
+1,56,2,54,1,0,0,0,0,192,0,-1--1--1,,1|(1537,619)|
+1,57,54,20,1,0,0,0,0,192,0,-1--1--1,,1|(1451,472)|
+1,58,23,26,1,0,0,0,0,192,0,-1--1--1,,1|(1661,516)|
+1,59,54,26,1,0,0,0,0,192,0,-1--1--1,,1|(1580,556)|
+12,60,0,126,101,77,16,8,7,0,2,-1,0,0,0,-1--1--1,0-0-0,|14||0-128-0,0,0,0,0,0,0
+Constants that are fixed and well defined
+12,61,0,129,149,74,24,8,7,0,2,-1,0,0,0,-1--1--1,0-0-0,|14||0-0-255,0,0,0,0,0,0
+Constants that are assumptions or need calibrating
+12,62,0,122,194,54,16,8,7,0,2,-1,0,0,0,-1--1--1,0-0-0,|14||255-128-0,0,0,0,0,0,0
+Constants read from Excel
+10,63,Excel Input,334,92,39,8,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||255-128-0,0,0,0,0,0,0
+10,64,Total fleet,1612,151,52,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,65,44,64,0,0,0,0,0,192,0,-1--1--1,,1|(1627,196)|
+1,66,43,6,0,0,0,0,0,192,0,-1--1--1,,1|(1197,418)|
+10,67,Share of Cars in the Fleet,1732,162,56,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,68,44,67,0,0,0,0,0,192,0,-1--1--1,,1|(1672,200)|
+10,69,Excel Input,1286,185,23,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,70,69,21,0,0,0,0,0,192,0,-1--1--1,,1|(1298,203)|
+10,71,Excel Input,1297,457,23,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,72,71,30,0,0,0,0,0,192,0,-1--1--1,,1|(1326,456)|
+10,73,Excel Input,1291,789,23,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,74,73,31,0,0,0,0,0,192,0,-1--1--1,,1|(1321,778)|
+1,75,21,10,0,0,0,0,0,192,0,-1--1--1,,1|(1329,253)|
+12,76,48,1435,238,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,77,79,76,4,0,0,22,0,0,0,-1--1--1,,1|(1435,256)|
+1,78,79,32,100,0,0,22,0,0,0,-1--1--1,,1|(1435,314)|
+11,79,48,1435,270,5,4,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,80,C4C Discards ap,1482,270,42,16,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,81,32,80,1,0,0,0,0,192,0,-1--1--1,,1|(1468,315)|
+12,82,48,1435,537,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,83,85,82,4,0,0,22,0,0,0,-1--1--1,,1|(1435,564)|
+1,84,85,2,100,0,0,22,0,0,0,-1--1--1,,1|(1435,625)|
+11,85,48,1435,588,5,4,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,86,Emissions out due to C4C cp,1489,588,50,16,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,87,C4C Discards ap,1445,504,46,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,88,87,86,1,0,0,0,0,192,0,-1--1--1,,1|(1472,531)|
+1,89,54,86,1,0,0,0,0,192,0,-1--1--1,,1|(1525,532)|
+12,90,48,1181,364,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,91,93,32,4,0,0,22,0,0,0,-1--1--1,,1|(1311,364)|
+1,92,93,90,100,0,0,22,0,0,0,-1--1--1,,1|(1227,364)|
+11,93,48,1268,364,4,5,34,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,94,C4C Replacement Sales p,1268,344,62,16,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,95,48,1190,664,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,96,98,2,4,0,0,22,0,0,0,-1--1--1,,1|(1326,664)|
+1,97,98,95,100,0,0,22,0,0,0,-1--1--1,,1|(1238,664)|
+11,98,48,1280,664,4,5,34,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,99,Emission Introduction from C4C Replacement p,1280,636,77,24,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,100,0,120,236,38,16,8,7,0,2,-1,0,0,0,-1--1--1,0-0-0,|14||255-0-0,0,0,0,0,0,0
+Inputs on dashboard
+10,101,"New Vehicle Emissions CAFE + EV p",1067,772,65,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,102,101,15,1,0,0,0,0,192,0,-1--1--1,,1|(1158,761)|
+10,103,C4C Hazard Rate ai,1525,193,46,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,104,103,80,1,0,0,0,0,64,0,-1--1--1,,1|(1514,230)|
+10,105,Total Fleet Emissions C4C,223,578,54,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,106,VMT cp,200,524,26,9,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||255-128-0,0,0,0,0,0,0
+1,107,106,105,0,0,0,0,0,192,0,-1--1--1,,1|(206,541)|
+10,108,Grams CO2 per Gigatonne CO2,188,629,54,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,109,108,105,0,0,0,0,0,192,0,-1--1--1,,1|(200,609)|
+10,110,Annual Emissions per Vehicle C4C,576,410,64,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,111,VMT cp,500,368,34,9,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,112,111,110,0,0,0,0,0,192,0,-1--1--1,,1|(525,382)|
+10,113,Grams CO2 per Tonne CO2,544,473,53,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,114,113,110,0,0,0,0,0,192,0,-1--1--1,,1|(556,447)|
+10,115,Average Total Fleet Emissions,209,695,56,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,116,108,115,0,0,0,0,0,192,0,-1--1--1,,1|(196,655)|
+10,117,Average Annual Emissions per Vehicle C4C,570,536,57,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,118,113,117,0,0,0,0,0,192,0,-1--1--1,,1|(552,494)|
+10,119,Fleet ap,384,422,35,9,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,120,119,110,0,0,0,0,0,192,0,-1--1--1,,1|(458,417)|
+10,121,Emissions cp,385,506,41,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,122,121,110,0,0,0,0,0,192,0,-1--1--1,,1|(473,461)|
+10,123,Excel Input,141,455,23,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,124,123,106,0,0,0,0,0,192,0,-1--1--1,,1|(168,487)|
+1,125,119,117,0,0,0,0,0,192,0,-1--1--1,,1|(458,467)|
+1,126,121,117,0,0,0,0,0,192,0,-1--1--1,,1|(462,517)|
+10,127,Emissions cp,48,599,41,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,128,127,105,0,0,0,0,0,192,0,-1--1--1,,1|(122,590)|
+1,129,127,115,0,0,0,0,0,192,0,-1--1--1,,1|(121,643)|
+10,130,Average Emissions cp,330,731,52,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+10,131,ICE CO2 conversion factor,323,815,40,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+10,132,Average Fuel Consumption ci,455,773,56,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,133,130,132,0,0,0,0,0,192,0,-1--1--1,,1|(385,749)|
+1,134,131,132,0,0,0,0,0,192,0,-1--1--1,,1|(376,798)|
+10,135,Average Fuel Economy ci,624,770,47,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,136,132,135,0,0,0,0,0,192,0,-1--1--1,,1|(537,771)|
+10,137,Cumulative Emissions,793,179,56,37,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,138,48,552,176,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,139,141,137,4,0,0,22,0,0,0,-1--1--1,,1|(694,176)|
+1,140,141,138,100,0,0,22,0,0,0,-1--1--1,,1|(603,176)|
+11,141,48,648,176,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,142,Increase in Cumulative Emissions,648,206,40,24,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,143,Average Total Fleet Emissions,458,189,60,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,144,143,142,0,0,0,0,0,192,0,-1--1--1,,1|(556,197)|
+10,145,Cumulative Emissions Reduction,839,296,40,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,146,Cumulative Emissions Reference,945,176,44,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,147,137,145,0,0,0,0,0,192,0,-1--1--1,,1|(815,237)|
+1,148,146,145,0,0,0,0,0,192,0,-1--1--1,,1|(896,230)|
+10,149,Unit Cost of Emissions Reduction,778,419,42,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,150,Cumulative Cost of C4C Program,727,263,62,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,151,150,149,0,0,0,0,0,192,0,-1--1--1,,1|(748,330)|
+1,152,145,149,0,0,0,0,0,192,0,-1--1--1,,1|(811,351)|
+10,153,Tonnes per Billion Tonnes,644,356,52,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,154,153,149,0,0,0,0,0,192,0,-1--1--1,,1|(700,382)|
+10,155,Fuel Price Adjusted VMT,116,767,53,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,156,155,115,0,0,0,0,0,192,0,-1--1--1,,1|(156,735)|
+10,157,Fuel Price Adjusted VMT,463,614,53,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,158,157,117,0,0,0,0,0,192,0,-1--1--1,,1|(504,583)|
+10,159,Actual C4C Replacement Vehicles Emission p,1081,601,78,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,160,159,99,1,0,0,0,0,192,0,-1--1--1,,1|(1168,630)|
+1,161,80,94,1,0,0,0,0,192,0,-1--1--1,,1|(1372,126)|
+10,162,C4C Replacement Sales p,1210,556,67,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,163,162,99,1,0,0,0,0,192,0,-1--1--1,,1|(1222,581)|
+10,164,Sales p,1063,715,34,9,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,165,164,15,1,0,0,0,0,192,0,-1--1--1,,1|(1137,729)|
+10,166,Aggregate Market Growth Rate,887,544,62,16,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||255-0-0,0,0,0,0,0,0
+10,167,GHG Emissions EV Effective e,1494,796,64,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,168,167,31,0,0,0,0,0,192,0,-1--1--1,,1|(1449,778)|
+10,169,Share of EV i,1075,324,34,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,170,169,94,0,0,0,0,0,192,0,-1--1--1,,1|(1150,331)|
+10,171,Vehicle,1532,749,26,9,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,172,171,31,0,0,0,0,0,192,0,-1--1--1,,1|(1479,750)|
+10,173,Annual Retirements C4C,1157,229,64,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,174,New Vehicle Emissions Fleet Average p,908,669,56,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,175,159,174,0,0,0,0,0,192,0,-1--1--1,,1|(998,633)|
+1,176,101,174,0,0,0,0,0,192,0,-1--1--1,,1|(993,724)|
+1,177,162,174,1,0,0,0,0,192,0,-1--1--1,,1|(1034,541)|
+1,178,164,174,1,0,0,0,0,192,0,-1--1--1,,1|(997,702)|
+10,179,Weight of Fuel Savings,740,536,55,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,180,Average Total Fleet Emissions Reference,189,380,79,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,181,Cumulative Gas Tax Revenue,631,296,60,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,182,181,149,0,0,0,0,0,192,0,-1--1--1,,1|(694,349)|
+10,183,Initial Average Total Fleet Emissions Reference,175,313,74,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,184,Average Fleet Emission Reduction Reference,360,347,71,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,185,183,184,0,0,0,0,0,192,0,-1--1--1,,1|(262,328)|
+1,186,180,184,0,0,0,0,0,192,0,-1--1--1,,1|(271,364)|
+10,187,Initial Average Total Fleet Emissions,322,642,50,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,188,115,187,0,0,0,0,0,192,1,-1--1--1,,1|(251,675)|
+10,189,Average Fleet Emission Reduction,475,246,71,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,190,Initial Average Total Fleet Emissions,322,215,55,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,191,143,189,0,0,0,0,0,192,0,-1--1--1,,1|(463,210)|
+1,192,190,189,0,0,0,0,0,192,0,-1--1--1,,1|(383,227)|
+10,193,Average Fleet Emission Reduction Improvement,488,305,71,24,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,194,184,193,0,0,0,0,0,192,0,-1--1--1,,1|(417,328)|
+1,195,189,193,0,0,0,0,0,192,0,-1--1--1,,1|(478,264)|
+1,196,169,5,1,0,0,0,0,192,0,-1--1--1,,1|(1153,367)|
+10,197,SW C4C must buy EVs,1155,280,52,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,198,197,94,1,0,0,0,0,192,0,-1--1--1,,1|(1179,308)|
+10,199,New Customer Sales i,952,483,52,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,200,166,199,0,0,0,0,0,192,0,-1--1--1,,1|(913,518)|
+1,201,64,199,1,0,0,0,0,192,0,-1--1--1,,1|(1095,171)|
+1,202,67,199,1,0,0,0,0,192,0,-1--1--1,,1|(1639,67)|
+1,203,199,6,1,0,0,0,0,192,0,-1--1--1,,1|(1063,493)|
+10,204,Share of EVs in Fleet,694,698,45,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,205,Fleet ap,532,694,35,9,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,206,205,204,0,0,0,0,0,192,0,-1--1--1,,1|(601,694)|
+10,207,Cumulative Sales,1296,877,40,20,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,208,48,1113,874,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,209,211,207,4,0,0,22,0,0,0,-1--1--1,,1|(1225,874)|
+1,210,211,208,100,0,0,22,0,0,0,-1--1--1,,1|(1153,874)|
+11,211,48,1189,874,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,212,Annual Sales,1189,899,46,9,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,213,Sales p,1064,949,35,9,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,214,213,212,1,0,0,0,0,128,0,-1--1--1,,1|(1135,936)|
+10,215,Cumulative Sales Reference,1428,880,59,29,3,130,0,3,0,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,216,C4C Replacement Sales p,1141,987,46,24,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|0||128-128-128,0,0,0,0,0,0
+1,217,216,212,1,0,0,0,0,128,0,-1--1--1,,1|(1180,946)|
+10,218,Sales Difference,1323,978,57,9,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,219,207,218,0,0,0,0,0,128,0,-1--1--1,,1|(1308,926)|
+1,220,215,218,0,0,0,0,0,128,0,-1--1--1,,1|(1369,934)|
+10,221,Annual Sales Reference,1034,893,51,16,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|0||128-128-128,0,0,0,0,0,0
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Baseline
+$192-192-192,0,Arial|12|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,65,0
+10,1,Emissions cp 0,1183,603,61,30,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,2,48,904,318,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,3,4,2,100,0,0,22,0,0,0,-1--1--1,,1|(965,320)|
+11,4,48,1021,320,5,7,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,5,Sales p 0,1021,338,27,8,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,6,48,1147,135,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,7,8,6,4,0,0,22,0,0,0,-1--1--1,,1|(1147,166)|
+11,8,48,1147,194,7,5,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,9,Retirements ap 0,1099,194,36,14,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,10,48,895,620,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,11,13,1,4,0,0,22,0,0,0,-1--1--1,,1|(1039,623)|
+1,12,13,10,100,0,0,22,0,0,0,-1--1--1,,1|(926,623)|
+11,13,48,952,623,5,7,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,14,Emissions Introduction p 0,952,648,47,14,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,15,48,1144,458,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,16,18,15,4,0,0,22,0,0,0,-1--1--1,,1|(1150,485)|
+1,17,18,1,100,0,0,22,0,0,0,-1--1--1,,1|(1150,543)|
+11,18,48,1150,509,7,5,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,19,Emissions Phase Out cp 0,1093,509,51,14,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,20,5,13,1,0,43,0,2,192,0,-1--1--1,|14||0-0-0,1|(982,416)|
+11,21,5326,1369,300,5,7,34,131,0,0,1,0,0,0,0,0,0,0,0,0
+10,22,Fleet Aging ap 0,1369,324,34,14,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,23,25,1,36,0,0,22,2,0,0,-1--1--1,|14||0-0-0,1|(1298,598)|
+1,24,25,1,100,0,0,22,0,0,0,-1--1--1,,1|(1298,598)|
+11,25,4138,1357,598,5,7,34,131,0,0,1,0,0,0,0,0,0,0,0,0
+10,26,Emissions Cohort Progression cp 0,1357,624,53,14,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,27,Fleet ap 0,1180,306,71,28,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,28,4,27,4,0,0,22,0,0,0,-1--1--1,,1|(1067,320)|
+1,29,8,27,100,0,0,22,0,0,0,-1--1--1,,1|(1147,238)|
+1,30,21,27,36,0,0,22,0,0,0,-1--1--1,,1|(1307,300)|
+1,31,21,27,36,0,0,22,0,0,0,-1--1--1,,1|(1307,300)|
+1,32,27,21,1,0,43,0,2,192,0,-1--1--1,|14||0-0-0,1|(1288,268)|
+1,33,27,9,1,0,43,0,2,64,0,-1--1--1,|14||0-0-0,1|(1081,276)|
+12,34,48,1438,600,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,35,25,34,68,0,0,22,2,0,0,-1--1--1,|14||0-0-0,1|(1395,598)|
+12,36,48,1459,300,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,37,21,36,4,0,0,22,0,0,0,-1--1--1,,1|(1411,300)|
+10,38,Total outflow p 0,871,359,40,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,39,Total fleet p 0,1298,177,36,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,40,27,39,0,0,0,0,0,192,0,-1--1--1,,1|(1240,239)|
+10,41,Fleet Aging ap 0,800,397,37,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,42,41,38,0,0,0,0,0,192,0,-1--1--1,,1|(828,381)|
+10,43,Retirements ap 0,800,321,40,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,44,43,38,0,0,0,0,0,192,0,-1--1--1,,1|(828,336)|
+10,45,Retirements ap 0,1066,446,40,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,46,45,19,1,0,0,0,0,192,0,-1--1--1,,1|(1051,469)|
+10,47,Average Emissions cp 0,1294,422,45,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,48,27,47,1,0,0,0,0,192,0,-1--1--1,,1|(1277,372)|
+1,49,1,47,1,0,0,0,0,192,0,-1--1--1,,1|(1271,533)|
+1,50,47,19,1,0,0,0,0,192,0,-1--1--1,,1|(1210,395)|
+1,51,22,25,1,0,0,0,0,192,0,-1--1--1,,1|(1417,438)|
+1,52,47,25,1,0,0,0,0,192,0,-1--1--1,,1|(1336,480)|
+10,53,Total fleet 0,1228,114,35,8,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,54,39,53,0,0,0,0,0,192,0,-1--1--1,,1|(1264,147)|
+10,55,share of cars in the fleet 0,1348,86,47,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,56,39,55,0,0,0,0,0,192,0,-1--1--1,,1|(1319,137)|
+10,57,Average Fleet Emissions 0,1560,485,41,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,58,1,57,1,0,43,0,3,192,0,192-192-192,|14||0-0-0,1|(1478,523)|
+1,59,27,57,1,0,45,0,3,192,0,160-160-160,|14||0-0-0,1|(1378,399)|
+10,60,Average Fuel Consumption Reference,1580,548,40,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,61,57,60,1,0,0,0,0,192,0,-1--1--1,,1|(1571,511)|
+10,62,ICE CO2 conversion factor,1504,629,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,63,62,60,0,0,0,0,0,192,0,-1--1--1,,1|(1533,597)|
+10,64,"New Vehicle Emissions CAFE + EV p",826,696,54,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,65,64,14,0,0,0,0,0,192,0,-1--1--1,,1|(891,671)|
+10,66,Average Fuel Economy Reference,1621,607,60,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,67,60,66,0,0,0,0,0,192,0,-1--1--1,,1|(1599,575)|
+10,68,Total Fleet Emissions Reference,1375,694,32,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,69,1,68,0,0,0,0,0,192,0,-1--1--1,,1|(1287,651)|
+10,70,Total New Vehicle Sales Reference,863,279,53,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,71,4,70,0,0,0,0,0,192,0,-1--1--1,,1|(973,307)|
+10,72,Average Age of Fleet Reference,790,629,47,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,73,Total Age ap 0,634,594,38,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,74,73,72,0,0,0,0,0,192,0,-1--1--1,,1|(700,608)|
+10,75,Year,718,545,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,76,75,73,0,0,0,0,0,192,0,-1--1--1,,1|(687,562)|
+10,77,Fleet ap 0,553,648,37,7,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,78,77,73,0,0,0,0,0,192,0,-1--1--1,,1|(582,628)|
+1,79,77,72,0,0,0,0,0,192,0,-1--1--1,,1|(659,639)|
+10,80,Hazard Rate ap,1027,126,40,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,81,80,9,0,0,0,0,0,192,0,-1--1--1,,1|(1057,155)|
+10,82,Initial Fleet ap,1123,372,36,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,83,82,27,0,0,0,0,0,192,1,-1--1--1,,1|(1140,351)|
+10,84,Initial Emissions cp,1111,683,44,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,85,84,1,0,0,0,0,0,192,1,-1--1--1,,1|(1134,656)|
+10,86,Average Time Per Age,1396,209,44,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,87,86,21,1,0,0,0,0,192,0,-1--1--1,,1|(1393,258)|
+10,88,Fleet Average New Vehicles Fuel Economy Reference,974,243,69,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,89,4,88,0,0,0,0,0,192,0,-1--1--1,,1|(1006,296)|
+10,90,VMT cp,1462,687,30,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,91,90,68,0,0,0,0,0,192,0,-1--1--1,,1|(1426,689)|
+10,92,Grams CO2 per Gigatonne CO2,1256,683,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,93,92,68,0,0,0,0,0,192,0,-1--1--1,,1|(1317,688)|
+10,94,Annual Emissions per Vehicle Reference,1542,374,65,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,95,1,94,1,0,0,0,0,192,0,-1--1--1,,1|(1404,483)|
+10,96,Grams CO2 per Tonne CO2,1611,302,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,97,96,94,0,0,0,0,0,192,0,-1--1--1,,1|(1581,332)|
+10,98,VMT cp,1528,269,30,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,99,98,94,0,0,0,0,0,64,0,-1--1--1,,1|(1533,311)|
+1,100,27,94,1,0,0,0,0,192,0,-1--1--1,,1|(1357,338)|
+10,101,Average Total Fleet Emissions Reference,1204,747,63,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,102,1,101,0,0,0,0,0,192,0,-1--1--1,,1|(1193,676)|
+1,103,92,101,0,0,0,0,0,192,0,-1--1--1,,1|(1234,709)|
+10,104,Average VMT,1075,754,28,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,105,104,101,0,0,0,0,0,192,0,-1--1--1,,1|(1115,752)|
+10,106,Average Annual Emissions per Vehicle Reference,1598,426,65,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,107,96,106,0,0,0,0,0,192,0,-1--1--1,,1|(1605,353)|
+10,108,Average VMT,1672,342,28,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,109,108,106,0,0,0,0,0,192,0,-1--1--1,,1|(1643,374)|
+1,110,1,106,0,0,0,0,0,64,0,-1--1--1,,1|(1388,515)|
+1,111,27,106,0,0,0,0,0,64,0,-1--1--1,,1|(1385,364)|
+10,112,Cumulative Emissions Reference,571,141,56,37,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,113,48,331,139,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,114,116,112,4,0,0,22,0,0,0,-1--1--1,,1|(473,139)|
+1,115,116,113,100,0,0,22,0,0,0,-1--1--1,,1|(382,139)|
+11,116,48,427,139,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,117,Increase in Cumulative Emissions Reference,427,168,65,22,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,118,Average Total Fleet Emissions Reference,271,219,67,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,119,118,117,0,0,0,0,0,192,0,-1--1--1,,1|(330,199)|
+1,120,38,5,0,0,0,0,0,192,0,-1--1--1,,1|(945,348)|
+10,121,Initial Average Total Fleet Emissions Reference,1361,762,59,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,122,101,121,0,0,0,0,0,192,1,-1--1--1,,1|(1277,753)|
+10,123,Utility of EV e 0,350,474,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,124,Share of EV i 0,475,512,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,125,123,124,0,0,0,0,0,192,0,-1--1--1,,1|(405,490)|
+10,126,Price Surcharge of EVs relative to ICE 0,199,429,61,14,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,127,126,123,0,0,0,0,0,192,0,-1--1--1,,1|(273,451)|
+10,128,Logit Choice Scaling,566,457,41,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,129,128,124,0,0,0,0,0,64,0,-1--1--1,,1|(526,480)|
+10,130,Utility of ICE i,461,432,29,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,131,130,124,0,0,0,0,0,64,0,-1--1--1,,1|(466,465)|
+10,132,Cost of Driving ICE i 0,257,656,45,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,133,Relative Fuel Savings from Driving EV e 0,394,604,64,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,134,132,133,0,0,0,0,0,192,0,-1--1--1,,1|(318,632)|
+10,135,Average VMT,130,732,28,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,136,135,132,0,0,0,0,0,192,0,-1--1--1,,1|(186,697)|
+10,137,Baseline Fuel Price,82,587,40,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+1,138,137,132,0,0,0,0,0,192,0,-1--1--1,,1|(162,618)|
+10,139,New Vehicle ICE Fuel Consumption CAFE i,82,670,66,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,140,139,132,0,0,0,0,0,64,0,-1--1--1,,1|(173,662)|
+1,141,133,123,0,0,0,0,0,192,0,-1--1--1,,1|(374,545)|
+10,142,Weight of Fuel Savings,208,508,47,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,143,142,123,0,0,0,0,0,64,0,-1--1--1,,1|(278,491)|
+10,144,Weight of Price Surcharge,271,560,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,145,144,123,0,0,0,0,0,64,0,-1--1--1,,1|(305,522)|
+10,146,Effect of World Learning on Price,43,435,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,147,146,126,0,0,0,0,0,64,0,-1--1--1,,1|(111,432)|
+10,148,Initial Price Surcharge of EVs relative to ICE,92,362,52,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,149,148,126,0,0,0,0,0,64,0,-1--1--1,,1|(145,395)|
+10,150,Cumulative EV Sales 0,649,784,43,21,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,151,48,476,783,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,152,154,150,4,0,0,22,0,0,0,-1--1--1,,1|(577,783)|
+1,153,154,151,100,0,0,22,0,0,0,-1--1--1,,1|(513,783)|
+11,154,48,544,783,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,155,Annual EV Sales 0,544,803,31,14,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,156,Effect of Learning on Price 0,787,790,54,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,157,150,156,0,0,0,0,0,192,0,-1--1--1,,1|(705,785)|
+10,158,Learning Curve Strength Price,865,853,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,159,158,156,0,0,0,0,0,64,0,-1--1--1,,1|(831,825)|
+10,160,Reference Cumulative EV Sales,719,875,43,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,161,160,156,0,0,0,0,0,64,0,-1--1--1,,1|(751,833)|
+1,162,160,150,0,0,0,0,0,192,1,-1--1--1,,1|(688,834)|
+10,163,Effect of Learning on Price 0,79,503,53,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,164,163,126,0,0,0,0,0,192,0,-1--1--1,,1|(139,465)|
+10,165,Inconvenience of EV e 0,309,375,43,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,166,Effect of Learning on Market Formation 0,403,301,63,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,167,166,165,0,0,0,0,0,64,0,-1--1--1,,1|(361,333)|
+1,168,165,123,0,0,0,0,0,192,0,-1--1--1,,1|(326,418)|
+10,169,Ref Inconvenience of EV e,243,301,59,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,170,169,165,0,0,0,0,0,64,0,-1--1--1,,1|(270,332)|
+10,171,Learning Curve Strength Market Formation,487,363,50,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,172,171,166,0,0,0,0,0,64,0,-1--1--1,,1|(445,332)|
+10,173,Reference Cumulative EV Sales,557,312,43,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,174,173,166,0,0,0,0,0,64,0,-1--1--1,,1|(496,307)|
+10,175,Cumulative EV Sales 0,526,256,47,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,176,175,166,0,0,0,0,0,192,0,-1--1--1,,1|(471,276)|
+10,177,Share of EV i 0,899,390,40,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,178,177,5,0,0,0,0,0,192,0,-1--1--1,,1|(960,363)|
+10,179,Cost of Driving EV e 0,266,764,45,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,180,Fuel Savings from Driving EV e 0,419,708,54,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,181,179,180,0,0,0,0,0,192,0,-1--1--1,,1|(335,738)|
+10,182,Grid Electricity Cost,248,849,49,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,183,182,179,0,0,0,0,0,192,0,-1--1--1,,1|(254,813)|
+10,184,Energy Consumption EV e,105,827,59,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,185,184,179,0,0,0,0,0,64,0,-1--1--1,,1|(178,798)|
+1,186,135,179,0,0,0,0,0,192,0,-1--1--1,,1|(182,743)|
+1,187,180,133,0,0,0,0,0,192,0,-1--1--1,,1|(408,662)|
+1,188,132,180,0,0,0,0,0,192,0,-1--1--1,,1|(330,679)|
+10,189,Sales p 0,472,888,34,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,190,189,155,1,0,0,0,0,192,0,-1--1--1,,1|(515,859)|
+10,191,GHG Emissions EV e,948,708,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,192,191,14,0,0,0,0,0,192,0,-1--1--1,,1|(948,684)|
+10,193,New Customer Sales i 0,722,444,44,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,194,Aggregate Market Growth Rate,794,489,57,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,195,194,193,0,0,0,0,0,64,0,-1--1--1,,1|(763,470)|
+1,196,55,193,1,0,0,0,0,64,0,-1--1--1,,1|(840,126)|
+1,197,53,193,1,0,0,0,0,64,0,-1--1--1,,1|(815,197)|
+1,198,193,5,1,0,0,0,0,192,0,-1--1--1,,1|(842,431)|
+10,199,Share of EVs in Fleet Reference,677,712,47,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,200,Fleet ap 0,568,708,37,7,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,201,200,199,0,0,0,0,0,192,0,-1--1--1,,1|(610,709)|
+10,202,Weight of Market Maturity,388,399,51,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,203,202,123,0,0,0,0,0,128,0,-1--1--1,,1|(372,430)|
+10,204,"New Vehicle Fuel Economy CAFE + EV p",940,177,62,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,205,204,88,0,0,0,0,0,128,0,-1--1--1,,1|(953,203)|
+10,206,Cumulative Sales Reference,1224,854,40,20,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,207,48,1041,851,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,208,210,206,4,0,0,22,0,0,0,-1--1--1,,1|(1153,851)|
+1,209,210,207,100,0,0,22,0,0,0,-1--1--1,,1|(1081,851)|
+11,210,48,1117,851,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,211,Annual Sales Reference,1117,876,43,17,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,212,Sales p 0,1021,919,35,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,213,212,211,1,0,0,0,0,128,0,-1--1--1,,1|(1069,902)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*EV
+$192-192-192,0,Arial|12|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,75,0
+10,1,Utility of EV e,597,248,41,7,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Utility of ICE i,752,245,37,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Share of EV i,681,323,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,4,1,3,0,0,0,0,0,192,0,-1--1--1,,1|(632,280)|
+1,5,2,3,0,0,0,0,0,192,0,-1--1--1,,1|(719,281)|
+10,6,Logit Choice Scaling,791,290,38,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+1,7,6,3,0,0,0,0,0,192,0,-1--1--1,,1|(738,305)|
+10,8,Inconvenience of EV e,499,160,43,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,9,Weight of Price Surcharge,457,302,46,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-0-255,0,0,0,0,0,0
+10,10,Average VMT,308,516,40,7,8,3,0,2,-1,0,0,0,128-128-128,0-0-0,|12||0-0-255,0,0,0,0,0,0
+10,11,"GHG Emissions Factor - Grid Mix",1101,188,50,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-128-0,0,0,0,0,0,0
+10,12,"GHG Emissions Factor - Renewables",1305,189,61,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-128-0,0,0,0,0,0,0
+10,13,Green Electricity Share,1206,146,49,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,14,Current Share Renewables,1121,92,42,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+10,15,Max Share Renewables,1298,92,36,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+1,16,14,13,0,0,0,0,0,192,0,-1--1--1,,1|(1159,117)|
+1,17,15,13,0,0,0,0,0,192,0,-1--1--1,,1|(1255,117)|
+10,18,FINAL TIME,1229,54,22,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,19,18,13,0,0,0,0,0,64,0,-1--1--1,,1|(1218,96)|
+10,20,INITIAL TIME,1163,53,25,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,21,20,13,0,0,0,0,0,64,0,-1--1--1,,1|(1182,96)|
+10,22,Native units to GGE Electricity,177,473,46,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-128-0,0,0,0,0,0,0
+10,23,GHG Emissions EV Effective e,1202,270,47,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,24,EV Energy Efficiency e,1058,278,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,25,Weight of Fuel Savings,674,119,43,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+10,26,"New Vehicle Fuel Consumption CAFE + EV p",79,440,62,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+10,27,Fuel Consumption of EV e,180,396,55,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,28,26,27,0,0,0,0,0,192,0,-1--1--1,,1|(135,415)|
+10,29,Electricity Cost,490,435,30,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,30,Energy Consumption EV e,304,437,59,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,31,22,30,0,0,0,0,0,192,0,-1--1--1,,1|(235,457)|
+1,32,27,30,0,0,0,0,0,192,0,-1--1--1,,1|(238,415)|
+10,33,Cost of Driving EV e,429,483,45,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,34,30,33,0,0,0,0,0,192,0,-1--1--1,,1|(362,458)|
+1,35,29,33,0,0,0,0,0,192,0,-1--1--1,,1|(463,456)|
+10,36,Cost of Driving ICE i,448,638,45,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,37,New Vehicle ICE Fuel Consumption CAFE i,281,681,66,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+10,38,Fuel Price Adjusted VMT,356,584,42,14,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,39,38,36,0,0,0,0,0,192,0,-1--1--1,,1|(398,609)|
+1,40,37,36,0,0,0,0,0,192,0,-1--1--1,,1|(371,658)|
+10,41,Real Fuel Price,268,632,32,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,42,41,36,0,0,0,0,0,192,0,-1--1--1,,1|(347,634)|
+10,43,Fuel Savings from Driving EV e,559,554,54,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,44,33,43,0,0,0,0,0,192,0,-1--1--1,,1|(490,517)|
+1,45,36,43,0,0,0,0,0,192,0,-1--1--1,,1|(500,599)|
+10,46,"2050 EV Energy Efficiency increase",957,336,56,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+10,47,Initial EV Energy Efficiency e,950,221,49,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-128-0,0,0,0,0,0,0
+1,48,46,24,0,0,0,0,0,192,0,-1--1--1,,1|(1004,308)|
+10,49,FINAL TIME,949,293,22,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,50,49,24,0,0,0,0,0,64,0,-1--1--1,,1|(993,287)|
+10,51,INITIAL TIME,948,262,25,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,52,51,24,0,0,0,0,0,64,0,-1--1--1,,1|(994,268)|
+1,53,47,24,0,0,0,0,0,192,0,-1--1--1,,1|(1000,248)|
+10,54,Relative Fuel Savings from Driving EV e,671,644,62,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,55,43,54,0,0,0,0,0,192,0,-1--1--1,,1|(606,592)|
+1,56,36,54,0,0,0,0,0,192,0,-1--1--1,,1|(547,641)|
+1,57,25,1,0,0,0,0,0,192,0,-1--1--1,,1|(635,183)|
+1,58,8,1,0,0,0,0,0,192,0,-1--1--1,,1|(548,205)|
+10,59,Relative Fuel Savings from Driving EV e,719,165,62,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,60,59,1,0,0,0,0,0,192,0,-1--1--1,,1|(650,212)|
+1,61,10,33,0,0,0,0,0,192,0,-1--1--1,,1|(355,503)|
+10,62,SW EV Renewable Electricity,1303,346,55,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||255-0-255,0,0,0,0,0,0
+1,63,62,23,0,0,0,0,0,192,0,-1--1--1,,1|(1256,310)|
+1,64,9,1,0,0,0,0,0,192,0,-1--1--1,,1|(531,274)|
+10,65,Cumulative EV Sales,1081,539,43,21,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,66,48,908,538,6,5,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,67,69,65,4,0,0,22,0,0,0,-1--1--1,,1|(1009,538)|
+1,68,69,66,100,0,0,22,0,0,0,-1--1--1,,1|(943,538)|
+11,69,48,976,538,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,70,Annual EV Sales,976,557,31,14,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,71,Sales p,962,648,29,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,72,C4C Replacement Sales p,872,609,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,73,72,70,1,0,0,0,0,192,0,-1--1--1,,1|(949,582)|
+1,74,71,70,1,0,0,0,0,192,0,-1--1--1,,1|(979,603)|
+10,75,Reference Cumulative EV Sales,1162,611,43,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,76,Learning Curve Strength Price,1239,497,46,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+10,77,Effect of Learning on Price,1214,554,53,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,78,65,77,0,0,0,0,0,192,0,-1--1--1,,1|(1138,545)|
+1,79,75,77,0,0,0,0,0,192,0,-1--1--1,,1|(1188,582)|
+1,80,76,77,0,0,0,0,0,192,0,-1--1--1,,1|(1228,521)|
+1,81,75,65,0,0,0,0,0,192,1,-1--1--1,,1|(1124,577)|
+10,82,Initial Price Surcharge of EVs relative to ICE,260,211,65,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-0-255,0,0,0,0,0,0
+10,83,Price Surcharge of EVs relative to ICE,436,235,56,14,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,84,83,1,0,0,0,0,0,192,0,-1--1--1,,1|(520,241)|
+10,85,Cumulative World EV Sales,1075,452,43,21,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,86,48,901,452,6,5,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,87,89,85,4,0,0,22,0,0,0,-1--1--1,,1|(1003,452)|
+1,88,89,86,100,0,0,22,0,0,0,-1--1--1,,1|(936,452)|
+11,89,48,969,452,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,90,Annual World EV Sales,969,471,40,14,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,91,Reference Cumulative World EV Sales,1165,381,53,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,92,Effect of World Learning on Price,1221,449,53,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,93,91,92,0,0,0,0,0,192,0,-1--1--1,,1|(1193,416)|
+1,94,91,85,0,0,0,0,0,192,1,-1--1--1,,1|(1123,415)|
+1,95,76,92,0,0,0,0,0,192,0,-1--1--1,,1|(1232,478)|
+1,96,85,92,0,0,0,0,0,192,0,-1--1--1,,1|(1139,451)|
+10,97,EV Market Growth Rate,922,405,38,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,98,97,89,1,0,0,0,0,192,0,-1--1--1,,1|(956,428)|
+1,99,85,89,1,0,0,0,0,192,0,-1--1--1,,1|(1015,419)|
+10,100,Cumulative EV Sales,199,68,47,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,101,Effect of Learning on Market Formation,344,69,62,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,102,Reference Cumulative EV Sales,226,133,43,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,103,102,101,0,0,0,0,0,192,0,-1--1--1,,1|(288,98)|
+1,104,100,101,0,0,0,0,0,192,0,-1--1--1,,1|(260,68)|
+10,105,Learning Curve Strength Market Formation,223,14,49,22,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+1,106,105,101,0,0,0,0,0,192,0,-1--1--1,,1|(289,44)|
+10,107,Ref Inconvenience of EV e,488,63,55,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,108,Fuel Price Adjusted VMT Multiplier,203,575,42,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,109,108,38,0,0,0,0,0,0,0,-1--1--1,,1|(275,579)|
+1,110,10,38,0,0,0,0,0,192,0,-1--1--1,,1|(326,543)|
+1,111,101,8,0,0,0,0,0,64,0,-1--1--1,,1|(417,112)|
+1,112,107,8,0,0,0,0,0,64,0,-1--1--1,,1|(493,107)|
+1,113,82,83,0,0,0,0,0,0,0,-1--1--1,,1|(349,223)|
+10,114,Effect of World Learning on Price,317,309,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,115,114,83,0,0,0,0,0,192,0,-1--1--1,,1|(373,274)|
+10,116,Effect of Learning on Price,262,269,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,117,116,83,0,0,0,0,0,192,0,-1--1--1,,1|(345,253)|
+10,118,Renewable Electricity Surcharge,529,363,32,22,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+10,119,SW EV Renewable Electricity,611,483,34,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,120,118,29,0,0,0,0,0,192,0,-1--1--1,,1|(509,399)|
+1,121,119,29,0,0,0,0,0,192,0,-1--1--1,,1|(552,460)|
+10,122,Grid Electricity Cost,408,374,44,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-0-255,0,0,0,0,0,0
+1,123,122,29,0,0,0,0,0,192,0,-1--1--1,,1|(445,402)|
+10,124,Year of Fully Renewable Electricity,1333,289,38,22,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||255-0-0,0,0,0,0,0,0
+1,125,124,23,0,0,0,0,0,192,0,-1--1--1,,1|(1276,281)|
+10,126,Time,1189,321,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,127,126,23,0,0,0,0,0,64,0,-1--1--1,,1|(1193,302)|
+10,128,GHG Emissions EV e,1203,225,46,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,129,24,128,0,0,0,0,0,64,0,-1--1--1,,1|(1124,253)|
+1,130,11,128,0,0,0,0,0,64,0,-1--1--1,,1|(1148,205)|
+1,131,12,128,0,0,0,0,0,64,0,-1--1--1,,1|(1258,205)|
+1,132,13,128,0,0,0,0,0,64,0,-1--1--1,,1|(1204,181)|
+1,133,128,23,0,0,0,0,0,192,0,-1--1--1,,1|(1202,243)|
+10,134,Time,510,475,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,135,134,29,0,0,0,0,0,64,0,-1--1--1,,1|(503,461)|
+10,136,Year of Fully Renewable Electricity,652,428,41,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,137,136,29,0,0,0,0,0,192,0,-1--1--1,,1|(569,431)|
+10,138,Green Electricity Share,634,375,53,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,139,138,29,0,0,0,0,0,192,0,-1--1--1,,1|(564,404)|
+10,140,C4C Incentive Value,809,66,60,18,8,131,0,42,0,0,0,0,0-0-0,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+10,141,SW C4C Active,802,-22,39,16,8,131,0,10,0,0,0,0,0-0-0,0-0-0,|16||255-0-255,0,0,0,0,0,0
+10,142,SW C4C must buy EVs,986,-22,54,18,8,3,0,10,-1,0,0,0,128-128-128,0-0-0,|16|B|255-0-255,0,0,0,0,0,0
+10,143,Share of EVs in Fleet Reference,917,111,50,14,8,2,0,3,0,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,144,Share of EVs in Fleet,916,149,43,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,145,Weight of Market Maturity,594,144,47,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-0-255,0,0,0,0,0,0
+1,146,145,1,0,0,0,0,0,128,0,-1--1--1,,1|(595,196)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*C4C
+$192-192-192,0,Arial|12|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,5,0
+10,1,C4C Discards ap,765,196,40,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,2,Cumulative Retirements C4C,1098,179,60,31,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,3,48,870,172,6,5,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,4,6,2,4,0,0,22,0,0,0,-1--1--1,,1|(1000,172)|
+1,5,6,3,100,0,0,22,0,0,0,-1--1--1,,1|(914,172)|
+11,6,48,957,172,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,7,Annual Retirements C4C,957,193,50,14,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,8,1,7,1,0,0,0,0,192,0,-1--1--1,,1|(862,223)|
+10,9,Cumulative Cost of C4C Program,1102,269,60,29,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,10,48,872,272,6,5,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,11,13,9,4,0,0,22,0,0,0,-1--1--1,,1|(1003,272)|
+1,12,13,10,100,0,0,22,0,0,0,-1--1--1,,1|(916,272)|
+11,13,48,959,272,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,14,Annual Cost of C4C Program,959,293,44,14,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,15,C4C Incentive Value,753,311,45,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+1,16,15,14,1,0,0,0,0,192,0,-1--1--1,,1|(821,317)|
+10,17,Average Age of Fleet C4C,346,128,46,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,18,Total Age ap,218,74,38,7,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,19,Fleet ap,98,116,31,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,20,19,18,0,0,0,0,0,192,0,-1--1--1,,1|(154,95)|
+1,21,18,17,0,0,0,0,0,192,0,-1--1--1,,1|(270,95)|
+1,22,19,17,0,0,0,0,0,192,0,-1--1--1,,1|(210,121)|
+10,23,Year,332,50,14,8,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,24,23,18,0,0,0,0,0,192,0,-1--1--1,,1|(289,58)|
+10,25,Total New Vehicle Sales C4C,575,101,53,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,26,C4C Replacement Sales p,452,59,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,27,26,25,0,0,0,0,0,192,0,-1--1--1,,1|(509,79)|
+10,28,Sales p,434,128,29,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,29,28,25,0,0,0,0,0,192,0,-1--1--1,,1|(488,117)|
+10,30,C4C Average FE Shift i,496,512,39,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,31,"New Vehicle Fuel Consumption CAFE + EV p",801,649,62,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,32,Reference C4C Average FE Shift,565,431,50,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,33,32,30,0,0,0,0,0,192,0,-1--1--1,,1|(533,468)|
+10,34,Effect of C4C Stringency on Addressable Market i,430,404,63,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,35,Sensitivity of Addressable Market to C4C Stringency,428,314,67,22,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+1,36,35,34,0,0,0,0,0,192,0,-1--1--1,,1|(428,355)|
+1,37,34,30,0,0,0,0,0,192,0,-1--1--1,,1|(463,458)|
+10,38,C4C Hazard Rate ai,1411,542,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,39,C4C Incentive Value,1278,734,41,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+10,40,"Additional Annual Fuel Savings from trade-in to C4C vs CAFE i",901,524,72,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,41,Average VMT,684,431,40,7,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||0-0-255,0,0,0,0,0,0
+1,42,41,85,0,0,0,0,0,192,0,-1--1--1,,1|(719,463)|
+10,43,C4C Required Fuel Economy of New Vehicles i,313,590,56,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,44,Actual C4C Fuel Consumption of New Vehicles i,693,584,62,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,45,44,40,0,0,0,0,0,192,0,-1--1--1,,1|(788,556)|
+10,46,ICE CO2 conversion factor,458,704,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+10,47,Actual C4C Replacement Vehicles Emission p,620,668,65,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,48,46,47,0,0,0,0,0,192,0,-1--1--1,,1|(530,688)|
+10,49,Minimum Age to Qualify for C4C,1352,476,48,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+10,50,Reference C4C Hazard Rate ai,1481,437,44,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,51,49,38,0,0,0,0,0,192,0,-1--1--1,,1|(1378,505)|
+1,52,50,38,0,0,0,0,0,192,0,-1--1--1,,1|(1448,486)|
+10,53,C4C Start Year,198,500,29,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||255-0-0,0,0,0,0,0,0
+10,54,C4C End Year,199,653,26,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||255-0-0,0,0,0,0,0,0
+1,55,53,43,0,0,0,0,0,192,0,-1--1--1,,1|(246,538)|
+1,56,54,43,0,0,0,0,0,192,0,-1--1--1,,1|(244,628)|
+10,57,Time,362,662,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,58,57,43,0,0,0,0,0,192,0,-1--1--1,,1|(344,636)|
+10,59,Fleet Average New Vehicles Fuel Economy,1426,83,55,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,60,Time,1490,725,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,61,60,98,0,0,0,0,0,192,0,-1--1--1,,1|(1468,675)|
+10,62,C4C Start Year,1428,734,33,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+10,63,C4C End Year,1381,698,30,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,64,62,98,0,0,0,0,0,192,0,-1--1--1,,1|(1433,676)|
+1,65,63,98,0,0,0,0,0,192,0,-1--1--1,,1|(1408,658)|
+10,66,Sensitivity of Fuel Savings Effect,1012,770,53,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+10,67,Sensitivity of Hazard Rate to Age,1528,368,58,14,8,3,0,2,-1,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+1,68,67,50,0,0,0,0,0,64,0,-1--1--1,,1|(1507,398)|
+10,69,Reference Hazard Rate i,1346,361,40,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-0-255,0,0,0,0,0,0
+1,70,69,50,0,0,0,0,0,192,0,-1--1--1,,1|(1408,396)|
+10,71,C4C Replacement Sales p,1256,140,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,72,71,59,0,0,0,0,0,64,0,-1--1--1,,1|(1330,114)|
+10,73,Sales p,1206,101,29,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,74,73,59,0,0,0,0,0,64,0,-1--1--1,,1|(1298,93)|
+10,75,Average Fuel Consumption C4C,897,71,54,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,76,ICE CO2 conversion factor,753,119,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14||128-128-128,0,0,0,0,0,0
+1,77,76,75,0,0,0,0,0,192,0,-1--1--1,,1|(821,95)|
+10,78,Average Fuel Economy C4C,1058,71,42,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,79,75,78,0,0,0,0,0,192,0,-1--1--1,,1|(979,71)|
+10,80,Average Fleet Emissions,766,47,41,14,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,81,80,75,0,0,0,0,0,192,0,-1--1--1,,1|(821,56)|
+10,82,Average Fuel Consumption ci,707,821,53,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,83,Real Fuel Price,866,461,32,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,84,83,40,0,0,0,0,0,192,0,-1--1--1,,1|(878,485)|
+10,85,Fuel Price Adjusted VMT,770,509,42,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,86,Fuel Price Adjusted VMT Multiplier,796,431,42,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,87,86,85,0,0,0,0,0,192,0,-1--1--1,,1|(782,470)|
+1,88,85,40,0,0,0,0,0,192,0,-1--1--1,,1|(816,514)|
+10,89,Actual C4C Fuel Economy of New Vehicles i,503,587,50,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,90,30,89,0,0,0,0,0,192,0,-1--1--1,,1|(498,541)|
+1,91,43,89,0,0,0,0,0,192,0,-1--1--1,,1|(407,588)|
+1,92,89,47,0,0,0,0,0,192,0,-1--1--1,,1|(557,625)|
+1,93,89,44,0,0,0,0,0,192,0,-1--1--1,,1|(587,585)|
+1,94,43,34,0,0,0,0,0,192,0,-1--1--1,,1|(369,500)|
+10,95,Actual C4C Fuel Economy of New Vehicles i,1331,191,51,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,96,95,59,0,0,0,0,0,192,0,-1--1--1,,1|(1375,140)|
+10,97,SW C4C Active,1349,653,25,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||255-0-255,0,0,0,0,0,0
+10,98,Flag C4C Active,1440,611,27,14,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,99,97,98,0,0,0,0,0,192,0,-1--1--1,,1|(1390,634)|
+1,100,98,38,0,0,0,0,0,192,0,-1--1--1,,1|(1427,580)|
+10,101,Emissions cp,652,68,35,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,102,101,80,0,0,0,0,0,0,0,-1--1--1,,1|(702,59)|
+10,103,Fleet ap,646,23,31,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,104,103,80,0,0,0,0,0,0,0,-1--1--1,,1|(697,33)|
+10,105,Effect of C4C Stringency on C4C Hazard Rate i,1085,479,56,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,106,"New Vehicle Fuel Economy CAFE + EV p",203,439,64,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+10,107,Effect of Additional Fuel Savings from Driving C4C vs CAFE on C4C Hazard Rate i,1032,659,85,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,108,"Annual Fuel Savings from trade-in to CAFE ai",860,776,65,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,109,Real Fuel Price,697,737,32,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,110,82,108,0,0,0,0,0,192,0,-1--1--1,,1|(770,802)|
+10,111,Fuel Price Adjusted VMT,683,779,46,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,112,111,108,0,0,0,0,0,192,0,-1--1--1,,1|(758,778)|
+1,113,109,108,0,0,0,0,0,192,0,-1--1--1,,1|(758,751)|
+10,114,Effect of C4C Incentive on C4C Hazard Rate,1184,680,50,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,115,39,114,0,0,0,0,0,192,0,-1--1--1,,1|(1241,713)|
+10,116,Reference C4C Incentive Value,1254,614,45,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12||0-0-255,0,0,0,0,0,0
+1,117,116,114,0,0,0,0,0,192,0,-1--1--1,,1|(1226,640)|
+10,118,Sensitivity of Incentive Effect,1178,767,47,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+1,119,118,114,0,0,0,0,0,192,0,-1--1--1,,1|(1180,731)|
+10,120,C4C Required Fuel Economy of New Vehicles i,962,407,59,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,121,Sensitivity of C4C Stringency Effect,1168,395,53,14,8,3,0,2,-1,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+1,122,121,105,0,0,0,0,0,64,0,-1--1--1,,1|(1133,430)|
+1,123,120,105,0,0,0,0,0,192,0,-1--1--1,,1|(1019,441)|
+10,124,Combined Effect of ICE on C4C Hazard Rate i,1105,554,58,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,125,105,124,0,0,0,0,0,192,0,-1--1--1,,1|(1093,512)|
+1,126,107,124,0,0,0,0,0,192,0,-1--1--1,,1|(1066,610)|
+1,127,114,124,0,0,0,0,0,192,0,-1--1--1,,1|(1147,620)|
+1,128,66,107,0,0,0,0,0,192,0,-1--1--1,,1|(1020,722)|
+1,129,124,38,0,0,0,0,0,192,0,-1--1--1,,1|(1265,547)|
+10,130,GHG Emissions EV Effective e,547,749,51,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,131,130,47,0,0,0,0,0,192,0,-1--1--1,,1|(577,716)|
+10,132,C4C Replacement Sales p,793,266,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,133,132,14,1,0,0,0,0,192,0,-1--1--1,,1|(843,290)|
+10,134,SW C4C must buy EVs,1577,629,41,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-255,0,0,0,0,0,0
+10,135,Relative Fuel Savings from Driving C4C vs CAFE i,961,596,64,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,136,135,107,0,0,0,0,0,192,0,-1--1--1,,1|(993,625)|
+10,137,Effect of Additional Fuel Savings from driving EV vs ICE on C4C Hazard Rate i,1727,566,80,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,138,Relative Fuel Savings from Driving EV e,1744,668,62,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,139,138,137,0,0,0,0,0,192,0,-1--1--1,,1|(1736,621)|
+10,140,Sensitivity of Fuel Savings Effect,1620,701,57,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,141,140,137,0,0,0,0,0,192,0,-1--1--1,,1|(1667,640)|
+10,142,Combined Effect of EV on C4C Hazard Rate i,1563,527,58,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,143,137,142,0,0,0,0,0,192,0,-1--1--1,,1|(1638,545)|
+1,144,134,38,0,0,0,0,0,192,0,-1--1--1,,1|(1498,587)|
+1,145,142,38,0,0,0,0,0,192,0,-1--1--1,,1|(1479,535)|
+10,146,Effect of C4C EV Incentive on C4C Hazard Rate,1648,443,50,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,147,Reference C4C EV Incentive Value,1707,341,55,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|0-0-255,0,0,0,0,0,0
+1,148,147,146,0,0,0,0,0,192,0,-1--1--1,,1|(1682,384)|
+10,149,Sensitivity of Incentive Effect,1771,401,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,150,149,146,0,0,0,0,0,192,0,-1--1--1,,1|(1718,419)|
+1,151,146,142,0,0,0,0,0,192,0,-1--1--1,,1|(1609,482)|
+10,152,C4C Incentive Value,1734,487,45,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,153,152,146,0,0,0,0,0,192,0,-1--1--1,,1|(1703,470)|
+10,154,C4C Stringency Multipler Light Trucks,223,728,47,22,8,3,0,2,-1,0,0,0,0-0-0,0-0-0,|12||255-0-0,0,0,0,0,0,0
+1,155,154,43,0,0,0,0,0,64,0,-1--1--1,,1|(265,662)|
+10,156,C4C Stringency Multiplier Cars,331,728,47,14,8,3,0,2,-1,0,0,0,0-0-0,0-0-0,|12||255-0-0,0,0,0,0,0,0
+1,157,156,43,0,0,0,0,0,64,0,-1--1--1,,1|(323,667)|
+10,158,C4C Stringency Multiplier,203,790,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,159,158,154,0,0,0,0,0,64,0,-1--1--1,,1|(209,767)|
+10,160,C4C Stringency Multiplier,349,779,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,161,160,156,0,0,0,0,0,64,0,-1--1--1,,1|(341,757)|
+1,162,106,34,0,0,0,0,0,128,0,-1--1--1,,1|(313,422)|
+1,163,106,43,0,0,0,0,0,128,0,-1--1--1,,1|(255,511)|
+1,164,31,40,0,0,0,0,0,128,0,-1--1--1,,1|(848,590)|
+1,165,31,108,0,0,0,0,0,128,0,-1--1--1,,1|(828,709)|
+1,166,31,135,0,0,0,0,0,128,0,-1--1--1,,1|(875,625)|
+1,167,44,135,0,0,0,0,0,128,0,-1--1--1,,1|(821,589)|
+10,168,"New Vehicle Fuel Economy CAFE + EV p",1271,37,64,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,169,168,59,0,0,0,0,0,128,0,-1--1--1,,1|(1349,59)|
+10,170,"New Vehicle Fuel Economy CAFE + EV p",1066,358,64,22,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,171,170,105,0,0,0,0,0,128,0,-1--1--1,,1|(1074,414)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*CAFE
+$192-192-192,0,Arial|12|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,75,0
+10,1,"2050 Emissions Target CO2 per mile i",498,118,60,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,"New Vehicle Emissions CAFE + EV p",481,346,55,22,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,"New Vehicle Fuel Economy CAFE + EV p",856,323,62,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,ICE CO2 conversion factor,760,444,53,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|0-128-0,0,0,0,0,0,0
+1,5,4,3,0,0,0,0,0,192,0,-1--1--1,,1|(802,390)|
+10,6,New Vehicle ICE Fuel Consumption CAFE i,1130,242,64,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,7,"2050 reduction of emissions",533,52,52,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14||255-0-0,0,0,0,0,0,0
+1,8,7,1,0,0,0,0,0,192,1,-1--1--1,,1|(519,76)|
+10,9,"New Vehicle Fuel Consumption CAFE + EV p",1031,318,64,22,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,10,3,9,0,0,0,0,0,192,0,-1--1--1,,1|(938,320)|
+10,11,FINAL TIME,665,391,22,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,12,Time,657,433,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,13,INITIAL TIME,293,215,25,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,14,Finish Point p,539,238,41,7,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,15,1,14,0,0,0,0,0,192,0,-1--1--1,,1|(519,181)|
+10,16,Start Point p,402,196,38,7,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,17,SAFE End Point Year,658,282,32,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,18,12,2,0,0,0,0,0,192,0,-1--1--1,,1|(586,398)|
+1,19,11,2,0,0,0,0,0,192,0,-1--1--1,,1|(593,373)|
+1,20,17,2,0,0,0,0,0,192,0,-1--1--1,,1|(585,308)|
+1,21,16,1,0,0,0,0,0,64,1,-1--1--1,,1|(437,166)|
+10,22,GHG Emissions EV Effective e,272,381,55,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,23,22,2,0,0,0,0,0,192,0,-1--1--1,,1|(372,364)|
+10,24,Native units to GGE Electricity,977,433,50,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,25,EV Energy Efficiency e,871,443,39,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+1,26,25,3,0,0,0,0,0,192,0,-1--1--1,,1|(864,391)|
+1,27,24,3,0,0,0,0,0,192,0,-1--1--1,,1|(923,385)|
+10,28,SAFE Rules CO2,386,268,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,29,28,2,0,0,0,0,0,128,0,-1--1--1,,1|(425,301)|
+1,30,14,2,0,0,0,0,0,128,0,-1--1--1,,1|(515,281)|
+10,31,Adjustment to real driving,680,328,43,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,32,31,2,0,0,0,0,0,128,0,-1--1--1,,1|(590,335)|
+1,33,28,16,0,0,0,0,0,128,0,-1--1--1,,1|(394,232)|
+1,34,13,16,0,0,0,0,0,128,0,-1--1--1,,1|(337,207)|
+10,35,SAFE Rules FE,682,231,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,36,35,3,0,0,0,0,0,128,0,-1--1--1,,1|(757,271)|
+1,37,17,3,0,0,0,0,0,128,0,-1--1--1,,1|(737,298)|
+1,38,31,3,0,0,0,0,0,128,0,-1--1--1,,1|(754,325)|
+1,39,14,3,1,0,0,0,0,128,0,-1--1--1,,1|(782,217)|
+1,40,11,3,0,0,0,0,0,128,0,-1--1--1,,1|(737,365)|
+1,41,12,3,0,0,0,0,0,128,0,-1--1--1,,1|(739,386)|
+1,42,9,6,0,0,0,0,0,128,0,-1--1--1,,1|(1082,278)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Gas Tax
+$192-192-192,0,Arial|12|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,65,0
+10,1,Baseline Fuel Price,440,563,40,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-0,0,0,0,0,0,0
+10,2,Gas Tax,450,466,25,8,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Real Fuel Price,547,494,28,14,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,4,2,3,0,0,0,0,0,192,0,-1--1--1,,1|(493,478)|
+1,5,1,3,0,0,0,0,0,192,0,-1--1--1,,1|(490,530)|
+10,6,Fuel Price Adjusted VMT Multiplier,681,535,58,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,7,Elasticity of VMT to Fuel Price,637,439,50,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,8,7,6,0,0,0,0,0,192,0,-1--1--1,,1|(657,484)|
+1,9,1,6,0,0,0,0,0,192,0,-1--1--1,,1|(547,550)|
+1,10,3,6,0,0,0,0,0,192,0,-1--1--1,,1|(601,510)|
+10,11,Fleet ap,882,312,31,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,12,ICE CO2 conversion factor,854,243,56,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|14|B|128-128-128,0,0,0,0,0,0
+10,13,Fuel Consumption ai,1041,228,47,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,14,12,13,0,0,0,0,0,192,0,-1--1--1,,1|(947,235)|
+10,15,Emissions cp,906,171,35,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,16,15,13,0,0,0,0,0,192,0,-1--1--1,,1|(969,197)|
+1,17,11,13,0,0,0,0,0,192,0,-1--1--1,,1|(952,275)|
+10,18,Average Miles Driven ai,1017,365,42,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,19,11,18,0,0,0,0,0,192,0,-1--1--1,,1|(937,334)|
+10,20,Total Fuel Consumption ai,1132,304,47,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,21,13,20,0,0,0,0,0,192,0,-1--1--1,,1|(1083,263)|
+1,22,18,20,0,0,0,0,0,192,0,-1--1--1,,1|(1070,336)|
+10,23,Cumulative Gas Tax Revenue,1406,481,58,38,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,24,48,1110,483,6,5,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,25,27,23,4,0,0,22,0,0,0,-1--1--1,,1|(1292,483)|
+1,26,27,24,100,0,0,22,0,0,0,-1--1--1,,1|(1172,483)|
+11,27,48,1232,483,4,5,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,28,Annual Gas Tax Revenue,1232,502,47,14,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,29,20,27,1,0,0,0,0,192,0,-1--1--1,,1|(1196,390)|
+10,30,Gas Tax,1145,575,32,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,31,30,28,0,0,0,0,0,192,0,-1--1--1,,1|(1181,544)|
+10,32,Fuel Price Adjusted VMT,887,442,46,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,33,32,18,0,0,0,0,0,192,0,-1--1--1,,1|(947,406)|
+10,34,Gas Tax Start Value,340,486,41,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+10,35,Gas Tax End Value,336,541,39,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+10,36,Gas Tax Ramp Start Year,336,390,44,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+10,37,Gas Tax Ramp End Year,337,444,44,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|14|B|255-0-0,0,0,0,0,0,0
+1,38,36,2,0,0,0,0,0,192,0,-1--1--1,,1|(394,428)|
+1,39,37,2,0,0,0,0,0,192,0,-1--1--1,,1|(398,455)|
+1,40,34,2,0,0,0,0,0,192,0,-1--1--1,,1|(398,475)|
+1,41,35,2,0,0,0,0,0,192,0,-1--1--1,,1|(394,503)|
+10,42,Time,413,380,22,8,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+1,43,42,2,0,0,0,0,0,64,0,-1--1--1,,1|(429,419)|
+10,44,SW Gas Tax Active,485,386,37,14,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|12|B|255-0-255,0,0,0,0,0,0
+1,45,44,2,0,0,0,0,0,192,0,-1--1--1,,1|(467,425)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Dashboard
+$192-192-192,0,Arial|12|B|0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|72,72,5,0
+12,1,3951447584,965,118,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Annual_C4C_Discards
+12,2,3951448224,1325,118,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Cumulative_C4C_Vehicle_D
+12,3,3951448232,1685,118,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Annual_Cost_of_the_Subsi
+12,4,3951448240,1685,370,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Cumulative_Cost_of_the_S
+12,5,3951448248,1325,370,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Average_Age_of_Fleet
+12,6,3951448256,965,622,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Average_Fuel_Economy
+10,7,C4C Incentive Value,514,334,60,18,8,131,0,42,0,0,0,0,0-0-0,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+10,8,Minimum Age to Qualify for C4C,698,334,65,18,8,131,0,42,0,0,0,0,0-0-0,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+12,9,3951448264,1685,622,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Total_Emissions_from_Fle
+12,10,3951448272,965,370,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Total_New_Vehicle_Sales
+10,11,C4C End Year,698,133,55,9,8,3,0,42,-1,0,0,0,128-128-128,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+10,12,C4C Start Year,514,133,58,9,8,3,0,42,-1,0,0,0,128-128-128,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+10,13,Sensitivity of Fuel Savings Effect,514,423,53,24,8,131,0,42,-1,0,0,0,0-0-0,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+10,14,Baseline Fuel Price,295,305,60,20,8,131,0,42,-1,0,0,0,128-128-128,0-0-0,Helvetica|16|B|255-0-0,0,0,0,0,0,0
+12,15,3951448280,2045,622,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Cumulative_Emissions_Red
+12,16,3951448288,2045,370,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Cumulative_Gas_Tax_Reven
+10,17,Gas Tax Start Value,234,187,52,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,18,Gas Tax End Value,355,187,49,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,19,Gas Tax Ramp Start Year,234,130,59,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,20,Gas Tax Ramp End Year,355,130,59,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+12,21,3951448296,2045,118,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Annual_Gas_Tax_Revenue
+10,22,SW C4C Active,514,74,39,16,8,131,0,10,0,0,0,0,0-0-0,0-0-0,|16||255-0-255,0,0,0,0,0,0
+10,23,SW Gas Tax Active,292,74,47,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-255,0,0,0,0,0,0
+10,24,Sensitivity of C4C Stringency Effect,514,475,73,17,8,131,0,10,-1,0,0,0,128-128-128,0-0-0,|16||255-0-0,0,0,0,0,0,0
+10,25,Sensitivity of Incentive Effect,698,420,63,18,8,131,0,10,-1,0,0,0,128-128-128,0-0-0,|16||255-0-0,0,0,0,0,0,0
+12,26,3951448304,1325,622,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+New_Vehicle_Emissions
+12,27,3951448312,1864,871,352,121,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+KPIs
+12,28,3951448336,547,800,129,47,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+CAFE_Points_Car
+10,30,"2050 reduction of emissions",488,616,67,18,8,3,0,10,-1,0,0,0,128-128-128,0-0-0,|16||255-0-0,0,0,0,0,0,0
+12,31,3951448352,547,899,129,47,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+CAFE_Points_LightTruck
+10,32,SW C4C must buy EVs,698,74,56,18,8,3,0,10,-1,0,0,0,128-128-128,0-0-0,|16|B|255-0-255,0,0,0,0,0,0
+12,33,0,608,19,116,23,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|22|BU|0-0-0,0,0,0,0,0,0
+Cash-For-Clunkers
+12,34,0,292,20,45,13,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|22|BU|0-0-0,0,0,0,0,0,0
+Gas Tax
+12,35,0,487,553,31,14,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|22|BU|0-0-0,0,0,0,0,0,0
+CAFE
+10,36,SW EV Renewable Electricity,286,380,49,25,8,131,0,10,-1,0,0,0,0-0-0,0-0-0,|16||255-0-255,0,0,0,0,0,0
+12,37,3951448368,965,874,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Share_of_EVs
+12,38,3951448376,1325,874,173,124,3,188,0,32,1,0,0,0,0-0-0,0-0-0,Helvetica|12||0-0-0,0,0,0,0,0,0
+Fleet_Emissions_Reductio
+10,39,Year of Fully Renewable Electricity,280,448,50,27,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16||255-0-0,0,0,0,0,0,0
+10,40,Aggregate Market Growth Rate,201,556,72,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,41,Total New Vehicle Sales C4C,359,509,58,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,42,Share of EV i,655,548,40,14,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12||128-128-128,0,0,0,0,0,0
+10,43,Renewable Electricity Surcharge,145,418,45,27,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,44,C4C Stringency Multipler Light Trucks,699,199,64,27,8,3,0,10,-1,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,45,C4C Stringency Multiplier Cars,506,191,64,18,8,3,0,10,-1,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,46,C4C Stringency Multiplier,593,265,64,18,8,3,0,10,0,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+1,47,46,45,0,0,0,0,0,192,0,-1--1--1,,1|(554,232)|
+1,48,46,44,0,0,0,0,0,192,0,-1--1--1,,1|(632,240)|
+10,49,Sensitivity of Hazard Rate to Age,688,476,74,18,8,3,0,10,-1,0,0,0,0-0-0,0-0-0,|16|B|255-0-0,0,0,0,0,0,0
+10,50,Average Fleet Emission Reduction Improvement,698,616,61,21,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|12|B|128-128-128,0,0,0,0,0,0
+///---\\\
+:GRAPH Emissions_Per_Vehicle
+:TITLE Emissions Per Vehicle
+:X-AXIS Time
+:SCALE
+:VAR New ICE Vehicle Emissions p[Car]
+:Y-MIN 0
+:Y-MAX 500
+:VAR New ICE Vehicle Emissions p[LightTruck]
+:VAR EV emissions per mile
+
+:GRAPH Cumulative_Emissions
+:TITLE Cumulative Emissions
+:X-AXIS Time
+:SCALE
+:VAR Greenhouse Gas Emissions
+
+:GRAPH Total_Fleet
+:TITLE Total Fleet
+:X-AXIS Time
+:SCALE
+:VAR Total Fleet by Platform p[Platform]
+:Y-MIN 0
+:Y-MAX 4e+08
+:VAR Total Fleet
+:Y-MIN 0
+:Y-MAX 4e+08
+
+:GRAPH Annual_Emissions
+:TITLE Annual Emissions
+:X-AXIS Time
+:SCALE
+:VAR Total Emission Rate
+:VAR Desired Annual Emissions 2050
+
+:TABLE Cumulative_GHG_Emissions
+:TITLE Cumulative GHG Emissions
+:PRETTYNUM
+:PRINT-EVERY 5
+:X-MIN 2010
+:X-MAX 2050
+:TIME-DOWN
+:FIRST-CELLWIDTH 15
+:CELLWIDTH 14
+:FONT Arial|24|B|0-0-0
+:VAR Greenhouse Gas Emissions
+
+:GRAPH Annual_C4C_Discards
+:TITLE Annual C4C Vehicle Discards
+:SCALE
+:VAR Annual Retirements C4C|Policy
+
+:GRAPH Cumulative_C4C_Vehicle_D
+:TITLE Cumulative C4C Vehicle Discards
+:SCALE
+:VAR Cumulative Retirements C4C|Policy
+
+:GRAPH Annual_Cost_of_the_Subsi
+:TITLE Annual Cost C4C Subsidy
+:SCALE
+:VAR Annual Cost of C4C Program|Policy
+
+:GRAPH Cumulative_Cost_of_the_S
+:TITLE Cumulative Cost C4C Subsidy
+:SCALE
+:VAR Cumulative Cost of C4C Program|Policy
+
+:GRAPH Average_Age_of_Fleet
+:TITLE Average Age of Fleet
+:SCALE
+:VAR Average Age of Fleet C4C|Policy
+:Y-MIN 7
+:Y-MAX 12
+:VAR Average Age of Fleet Reference|Reference
+
+:GRAPH Average_Fuel_Economy
+:TITLE Average Fuel Economy
+:SCALE
+:VAR Average Fuel Economy C4C|Policy
+:Y-MIN 15
+:Y-MAX 70
+:VAR Average Fuel Economy Reference|Reference
+
+:GRAPH Average_Fuel_Consumption
+:TITLE Average Fuel Consumption
+:SCALE
+:VAR Average Fuel Consumption C4C|Policy
+:VAR Average Fuel Consumption Reference|Reference
+
+:GRAPH Average_Annual_Emissions
+:TITLE Average Annual Emissions
+:SCALE
+:VAR Average Annual Emissions per Vehicle C4C|Policy
+:VAR Average Annual Emissions per Vehicle Reference|Reference
+
+:GRAPH Total_Emissions_from_Fle
+:TITLE Total Emissions from Fleet
+:SCALE
+:VAR Average Total Fleet Emissions|Policy
+:VAR Average Total Fleet Emissions Reference|Reference
+
+:GRAPH Total_New_Vehicle_Sales
+:TITLE Total New Vehicle Sales
+:SCALE
+:VAR Total New Vehicle Sales C4C|Policy
+:Y-MIN 1e+07
+:VAR Total New Vehicle Sales Reference|Reference
+
+:GRAPH New_Vehicle_Emissions
+:TITLE New Vehicle Emissions (Fleet Average)
+:SCALE
+:VAR New Vehicle Emissions Fleet Average p[Car]|Cars
+:Y-MIN 0
+:VAR New Vehicle Emissions Fleet Average p[LightTruck]|Light Trucks
+
+:GRAPH Average_Annual_Emissions_Actual
+:TITLE Average Annual Emissions (VMT Adjusted)
+:SCALE
+:VAR Annual Emissions per Vehicle C4C|Policy
+:VAR Annual Emissions per Vehicle Reference|Reference
+
+:GRAPH Total_Emissions_from_Fle_Actual
+:TITLE Total Emissions from Fleet (VMT Adjusted)
+:SCALE
+:VAR Total Fleet Emissions C4C|Policy
+:VAR Total Fleet Emissions Reference|Reference
+
+:GRAPH Cumulative_Emissions_Red
+:TITLE Cumulative GHG Reduction
+:SOFT-BOUNDS
+:SCALE
+:VAR Cumulative Emissions Reduction|Policy
+:Y-MIN 0
+:Y-MAX 2
+
+:GRAPH Cost_of_Emissions_Reduct
+:TITLE Unit Cost of GHG Reduction
+:SCALE
+:VAR Cost of Emissions Reduction per Tonne CO2|Policy
+:Y-MAX 1000
+
+:GRAPH Cumulative_Gas_Tax_Reven
+:TITLE Cumulative Gas Tax Revenue
+:SCALE
+:VAR Cumulative Gas Tax Revenue|Policy
+
+:GRAPH Annual_Gas_Tax_Revenue
+:TITLE Annual Gas Tax Revenue
+:SCALE
+:VAR Annual Gas Tax Revenue|Policy
+
+:TABLE KPIs
+:TITLE KPIs
+:PRETTYNUM
+:PRINT-EVERY 10
+:X-MIN 2030
+:X-MAX 2050
+:FIRST-CELLWIDTH 41
+:CELLWIDTH 9
+:FONT Arial|9||0-0-0
+:VAR Cumulative Retirements C4C|Cumulative Retirements C4C (vehicles)
+:VAR Cumulative Cost of C4C Program|Cumulative Cost of C4C Program ($)
+:VAR Cumulative Gas Tax Revenue|Cumulative Gas Tax Revenue ($)
+:VAR Unit Cost of Emissions Reduction|Unit Cost of Emissions Reduction ($/tonne CO2)
+:VAR Average Fleet Emission Reduction Improvement|Emission Reduction Improvement
+:VAR Average Fleet Emission Reduction
+:VAR Total Fleet Emissions C4C
+:VAR Average Total Fleet Emissions
+:VAR Cumulative Emissions Reduction
+:VAR Share of EVs in Fleet
+:VAR Sales Difference
+
+:TABLE CAFE_Points_Car
+:TITLE CAFE Points Car
+:PRETTYNUM
+:X-MIN 2050
+:NOTIME
+:FIRST-CELLWIDTH 21
+:CELLWIDTH 1
+:FONT Arial|9||0-0-0
+:VAR Start Point p[Car]
+:VAR Finish Point p[Car]
+
+:TABLE CAFE_Points_LightTruck
+:TITLE CAFE Points Light Truck
+:PRETTYNUM
+:X-MIN 2050
+:NOTIME
+:FIRST-CELLWIDTH 21
+:CELLWIDTH 1
+:FONT Arial|9||0-0-0
+:VAR Start Point p[LightTruck]
+:VAR Finish Point p[LightTruck]
+
+:GRAPH Fleet_Emissions_Reductio
+:TITLE Fleet Emissions Reduction
+:SCALE
+:VAR Average Fleet Emission Reduction|Policy
+:Y-MAX 1
+:VAR Average Fleet Emission Reduction Reference|Reference
+
+:GRAPH New_Vehicle_Fuel_Economy
+:TITLE New Vehicle Fuel Economy
+:DOTS
+:SCALE
+:VAR New Vehicle Fuel Economy p[Car]|Cars
+:VAR New Vehicle Fuel Economy p[LightTruck]|Light Trucks
+
+:GRAPH Share_of_EVs
+:TITLE Share of EVs
+:SCALE
+:VAR Share of EV i[Car]|Cars
+:Y-MIN 0
+:Y-MAX 1
+:VAR Share of EV i[LightTruck]|Light Trucks
+:L<%^E!@
+1:script.vdfx
+9:script
+22:$,Dollar,Dollars,$s
+22:Day,Days
+22:gallon,gallons
+22:Gigatonne CO2,Gigatonnes CO2
+22:gram CO2,grams CO2,g CO2
+22:Hour,Hours
+22:mile,miles
+22:Month,Months
+22:Person,People,Persons
+22:Tonne CO2,Tonnes CO2
+22:Unit,Units
+22:vehicle,vehicles
+22:Week,Weeks
+22:Year,Years
+18:$contour.vsc
+20:$sensitivitycontour.lst
+15:0,0,0,0,0,0
+19:65,0
+27:0,
+34:0,
+42:1
+72:0
+73:0
+4:Time
+5:Cumulative Sales
+35:Date
+36:YYYY-MM-DD
+37:2000
+38:1
+39:1
+40:0
+41:0
+76:0
+77:0
+78:0
+79:0
+80:0
+81:0
+24:2018
+25:2050
+26:2050
+57:1
+54:0
+55:0
+82:0
+86:0
+59:0
+56:0
+58:0
+71:0
+44:65001
+46:1
+45:1
+49:0
+50:0
+51:
+52:
+53:
+43:current - Trump to Obama 75
+47:current - Trump to Obama 75
+48:
+60:$contournew.tab
+61:65001
+62:1
+63:1
+64:0
+65:1
+66:0
+67:0
+68:0
+69:0
+70:1
+75:
+43:current - Trump to Obama 75
+6:a0
+6:a1
+6:a10
+6:a11
+6:a12
+6:a13
+6:a14
+6:a15
+6:a16
+6:a17
+6:a18
+6:a19
+6:a2
+6:a20
+6:a21
+6:a22
+6:a23
+6:a24
+6:a25
+6:a26
+6:a27
+6:a28
+6:a29
+6:a3
+6:a30
+6:a4
+6:a5
+6:a6
+6:a7
+6:a8
+6:a9
+6:c0
+6:c1
+6:c10
+6:c11
+6:c12
+6:c13
+6:c14
+6:c15
+6:c16
+6:c17
+6:c18
+6:c19
+6:c2
+6:c20
+6:c21
+6:c22
+6:c23
+6:c24
+6:c25
+6:c26
+6:c27
+6:c28
+6:c29
+6:c3
+6:c30
+6:c4
+6:c5
+6:c6
+6:c7
+6:c8
+6:c9
+6:Car
+6:EVCar
+6:EVLightTruck
+6:LightTruck
